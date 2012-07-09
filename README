@@ -1,1 +1,76 @@
-Welcome to scope.js!
+scope.js -- A client-side view-controller framework for JavaScript
+
+DOM Element Generation:
+
+	with (scope()) {
+		document.body.appendChild(
+			div(
+				h1('Hello World!'),
+				p('Why hello there!')
+			)
+		);
+	}
+
+
+DOM Templates:
+
+	with (scope()) {
+		define('hello_world', function(content) {
+			return div(
+				h1('Hello World!'),
+				p(content)
+			);
+		});
+
+		render(hello_world('Why hello there!'));
+	}
+
+
+DOM Events:
+
+	with (scope()) {
+		define('handle_click', function(event) {
+			console.log(event);
+		});
+	
+		define('hello_world', function(content) {
+			return div({ onClick: handle_click },
+				h1('Hello World!'),
+				p(content)
+			);
+		});
+
+		document.body.appendChild(
+			hello_world('Why hello there!')
+		);
+	}
+
+
+
+Client-side Hash Routing:
+
+	with (scope()) {
+		route('#', function() {
+			render(hello_world("This is a test"));
+		});
+	}
+
+
+Form processing:
+
+	with (scope()) {
+		define('process_form', function(data) {
+			console.log(data);
+		});
+	
+		route('#', function() {
+			render(
+				form({ action: process_form },
+					h1('What's your name?'),
+					div(text({ name: 'first_name', placeholder: 'First Name' }), text({ name: 'last_name', placeholder: 'Last Name' })),
+					checkbox({ name: 'special' }), 'Are you special?',
+					button('Go!')
+				)
+			);
+		});
+	}
