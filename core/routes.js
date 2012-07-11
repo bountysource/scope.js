@@ -16,7 +16,7 @@ with (scope()) {
   define('route', function(path, callback) {
     if (typeof(path) == 'string') {
       scope.routes.push({
-        regex: (new RegExp("^" + path.replace(/:[a-z_]+/g, '([^/]+)') + '$')),
+        regex: (new RegExp("^" + path.replace(/^#\//,'#').replace(/:[a-z_]+/g, '([^/]+)') + '$')),
         callback: callback,
         context: this
       });
@@ -27,14 +27,16 @@ with (scope()) {
     }
   });
 
-  // return the current route as a string from browser bar
+  // return the current route as a string from browser bar (#/foo becomes #foo)
   define('get_route', function() {
-    var path_bits = window.location.href.split('#');
-    var r = '#' + (path_bits[1] || '');
+    var r = '#' + ((window.location.href.match(/#\/?(.*)/)||[])[1] || '');
     return r;
   });
 
   define('set_route', function(path, options) {
+    // strip leading slash (#/foo --> #foo) 
+    path = path.replace(/^#\//,'#')
+    
     // super hax to fix layout bug
     if (document.getElementById('_content')) { 
       document.getElementById('_content').setAttribute('id','content');
@@ -73,11 +75,5 @@ with (scope()) {
     }
 
     alert('404 not found: ' + path);
-  });
-  
-  define('reload_page_with_route', function(path) {
-    scope.current_route = path;
-    window.location.href = window.location.href.split('#')[0] + path;
-    window.location.reload();
   });
 }
