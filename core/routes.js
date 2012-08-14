@@ -8,7 +8,9 @@ with (scope()) {
       var hash = get_route();
       if (hash != scope.current_route) set_route(hash, { skip_updating_browser_bar: true });
     }
-    callback();
+    
+    // run once all other initializers finish
+    setTimeout(callback, 0);
   });
  
   // define a route
@@ -16,7 +18,7 @@ with (scope()) {
   define('route', function(path, callback) {
     if (typeof(path) == 'string') {
       scope.routes.push({
-        regex: (new RegExp("^" + path.replace(/^#\//,'#').replace(/:[a-z_]+/g, '([^/]+)') + '$')),
+        regex: (new RegExp("^" + path.replace(/^#\//,'#').replace(/:[a-z_]+/g, '([^/]*)') + '$')),
         callback: callback,
         context: this
       });
