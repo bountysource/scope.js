@@ -65,7 +65,14 @@ with (scope()) {
   define('curry', function(callback) {
     var curried_args = Array.prototype.slice.call(arguments,1);
     return (function() {
-      callback.apply(null, Array.prototype.concat.apply(curried_args, arguments));
+      return callback.apply(this, Array.prototype.concat.apply(curried_args, arguments));
     });
   });  
+  
+  // expects an iteratable array
+  define('filter', function(iteratable, callback) {
+    var retval = [];
+    for (var i=0; i < iteratable.length; i++) if (callback(iteratable[i])) retval.push(iteratable[i]);
+    return retval;
+  });
 }

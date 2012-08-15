@@ -1,29 +1,99 @@
 with (scope()) {
-  define('element', function() {
-    // first argument is element type (div, span, etc)
+
+  define('render', function() {
     var arguments = flatten_to_array(arguments);
-    var tag = arguments.shift();
-    var element = document.createElement(tag);
     var options = shift_options_from_args(arguments);
 
-    // Fix bug for IE7: when create dynamically a radio button group/checkbox, we cannot set attributes: name, checked, etc.
-    if ((tag == 'input') && (options.type == 'radio' || options.type == 'checkbox') && (/MSIE (\d+\.\d+);/.test(navigator.userAgent) && (new Number(RegExp.$1) == 7))) {
-      element = document.createElement("<input type='" + options.type + "' " + (options['name'] ? "name='" + options['name'] + "'" : "") + (options['checked'] != null ? "CHECKED":" ") + "/>");
+    options.layout = typeof(options.layout) == 'undefined' ? ((options.target||options.into) ? false : this.default_layout) : options.layout;
+    options.target =  options.target || options.into || document.body;
+    if (typeof(options.target) == 'string') options.target = document.getElementById(options.target);
+
+    if (options.layout) {
+      arguments = options.layout(arguments);
+      if (!arguments.push) arguments = [arguments];
+      if (arguments[0].parentNode == options.target) return;
     }
 
-    // DEPRECATED... events: { click: asd, mousedown: fds }
-    if (options.events) {
-      var events = options.events;
-      delete options.events;
-      for (var k in events) {
-        options['on' + k] = events[k];
+    options.target.innerHTML = '';
+    //while (options.target.firstChild) options.target.removeChild(options.target.firstChild);
+    for (var i=0; i <= arguments.length; i++) {
+      var dom_element = arguments[i];
+      
+      // if it's a function, run it with observers
+      if (typeof(dom_element) == 'function') {
+        // console.log("running function")
+        dom_element = observe(dom_element, function(retval, old_retval) {
+          // console.log("INSIDE ELEMENT OBSERVER", retval, old_retval)
+          
+          // if the function returns nothing, use an empty string as a place holder
+          if (typeof(retval) == 'undefined') retval = '';
+
+          // duplicated below, shady.
+          if (['string','boolean','number'].indexOf(typeof(retval)) >= 0) retval = document.createTextNode('' + retval);
+  
+          // replace current previous node with current
+          if (old_retval && old_retval.parentNode) {
+            // console.log("has parentNode and needs refresh", retval, old_retval);
+            old_retval.parentNode.insertBefore(retval, old_retval);
+            old_retval.parentNode.removeChild(old_retval);
+          }
+
+          return retval;
+        });
       }
+      
+      // convert core JS types to text nodes
+      if (['string','boolean','number'].indexOf(typeof(dom_element)) >= 0) dom_element = document.createTextNode('' + dom_element);
+      
+      // insert it at the end
+      if (dom_element) options.target.appendChild(dom_element);
+    }
+  });
+  
+  // define('layout', function(name, callback) {
+  //   var layout_elem, yield_parent;
+  //   define(name, function() {
+  //     if (!layout_elem) {
+  //       var tmp_div = div();
+  //       layout_elem = callback(tmp_div);
+  //       yield_parent = tmp_div.parentNode;
+  //     }
+  //     
+  //     render({ into: yield_parent, layout: false }, arguments);
+  //     return layout_elem;
+  //   });
+  // });
+
+
+  // options processing order:
+  //   type
+  //   events/on*
+  //   style
+  //   class
+  //   attribute
+  define('element', function() {
+    var arguments = flatten_to_array(arguments);
+    var tag = arguments.shift();
+    var options = shift_options_from_args(arguments);
+
+    // first argument is element type (div, span, etc)
+    var element = document.createElement(tag);
+
+    // always set type first as IE7 behaves differently for different types
+    if (options.type) {
+      element.setAttribute('type', options.type);
+      delete options.type;
     }
 
-    // special case to set type first for IE because it changes things after type is set
-    if ((tag == 'input') && (options.type == 'submit')) element.setAttribute('type', options.type);
+    // converts { events: { click: 1, focus: 2 } } to { onClick: 1,  onFocus: 2 }
+    if (options.events) {
+      for (var k in options.events) {
+        options['on' + k] = options.events[k];
+      }
+      delete options.events;
+    }
 
-    // process attributes
+    // runs through all on* and attaches events to the object
     for (var k in options) {
       if (k.indexOf('on') == 0) {
         var callback = (function(cb) { return function() { cb.apply(element, Array.prototype.slice.call(arguments)); } })(options[k]);
@@ -32,30 +102,50 @@ with (scope()) {
         } else {
           element.attachEvent(k.toLowerCase(), callback);
         }
-      } else if (k == 'class') {
-        element.className = options['class'];
-      } else if (k == 'style') {
-        element.style.cssText = options.style;
-      } else if (k == 'placeholder') {
-        //add spaces to the end of placeholder so the serialized_form-hack doesn't match
-        element.setAttribute(k, options[k] + '          ');
-      } else if ((tag == 'input') && (options.type == 'submit') && (k == 'type')) {
-        // special case for IE... we already set type above
+        delete options[k];
+      }
+    }
+
+    // run through rest of the attributes
+    for (var k in options) {
+      if (typeof(options[k]) == 'function') {
+        //console.log("LIVE OBSERVER")
+
+        var key1 = k;
+        observe(options[k], function(retval) {
+          //console.log("SETTING LIVE OBSERVER", retval, element, key1)
+          set_attribute(element, key1, retval);
+        });
       } else {
-        element.setAttribute(k, options[k]);
+        set_attribute(element, k, options[k]);
       }
     }
     
     // append child elements
-    for (var i=0; i <= arguments.length; i++) {
-      if (typeof(arguments[i]) == 'object') {
-        element.appendChild(arguments[i]);
-      } else if (arguments[i]) {
-        element.appendChild(document.createTextNode(arguments[i]));
-      }
-    }
+    if (arguments.length > 0) render({ into: element }, arguments);
 
     return element;
+  });
+  
+  // basically setAttribute but with better class/style/placeholder support
+  define('set_attribute', function(element, key, value) { 
+    //console.log("setting attribute", element, key, value)
+
+    if (key == 'class') {
+      element.className = value;
+    } else if (key == 'style') {
+      element.style.cssText = value;
+    } else if (key == 'placeholder') {
+      //add spaces to the end of placeholder so the serialized_form-hack doesn't match
+      element.setAttribute(key, value + ' '); 
+    } else if (key == 'checked') {
+      //add spaces to the end of placeholder so the serialized_form-hack doesn't match
+      //console.log("SETTING CHECKED", value, value ? 'checked' : null)
+      //element.setAttribute(key, value ? 'checked' : null); 
+      element.checked = !!value;
+    } else {
+      element.setAttribute(key, value);
+    }
   });
 
   // simple elements
@@ -66,6 +156,7 @@ with (scope()) {
     'ul', 'ol', 'li', 'dl', 'dt', 'dd',
     'table', 'tr', 'td', 'th', 'thead', 'tbody', 'tfoot',
     'select', 'option', 'optgroup', 'textarea', 'button', 'label', 'fieldset',
+    'header', 'section', 'footer',
     function(tag) { 
       define(tag, function() { return element(tag, arguments) }); 
     }
@@ -161,15 +252,23 @@ with (scope()) {
     return this[options.type || 'text'](options, arguments);
   });
 
+  define('submit', function() {
+    var arguments = flatten_to_array(arguments);
+    var options = shift_options_from_args(arguments);
+    options.type = 'submit';
+    if (!options.value && arguments.length == 1) options.value = arguments.pop();
+    return element('input', options, arguments);
+  });
+
   // input types
   for_each(
-    'text', 'hidden', 'password', 'checkbox', 'radio', 'submit',
+    'text', 'hidden', 'password', 'checkbox', 'radio',
     function(input_type) {
       define(input_type, function() { 
         var arguments = flatten_to_array(arguments);
         var options = shift_options_from_args(arguments);
         options.type = input_type;
-        if ((input_type == 'submit') && !options.value && arguments.length == 1) options.value = arguments.pop();
+
         return element('input', options, arguments);
       });
     }

@@ -1,12 +1,14 @@
 with (scope('Test')) {
   define('test', function(name, callback) {
-    try {
-      callback();
-      console.log('PASSED: ' + name);
-    } catch(e) {
-      console.log('FAILED: ' + name);
-      console.log(e);
-    }
+    initializer(function() {
+      try {
+        callback();
+        document.body.appendChild(div('✔' + name))
+      } catch(e) {
+        document.body.appendChild(div('✘' + name))
+        console.log(e);
+      }
+    });
   });
   
   define('fail', function(message) {
