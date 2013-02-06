@@ -10,7 +10,9 @@
       route('#', function() {
         render(
           h1("Scope.js"),
-          p("Hello world, it's me!")
+          ul(li(a({ href: 'https://www.github.com/bountysource/scope.js' }, 'View Source on GitHub'))),
+          ul(li(a({ href: 'todomvc/' }, 'TodoMVC'))),
+          ul(li(a({ href: 'test/' }, 'Test Suite')))
         );
       });
     }
