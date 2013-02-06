@@ -1,3 +1,4 @@
+/* http://scopejs.net/ */
 var scope = function(namespace, base) {
   if (namespace) {
     if (base && !scope.instance[base]) {
