@@ -10,9 +10,17 @@
       route('#', function() {
         render(
           h1("Scope.js"),
+          ul(
+            li("Download:",
+              ul(
+                li(a({ href: 'scope-0.0.1.js' }, 'scope-0.0.1.js'), ' (28.4kb)'),
+                li(a({ href: 'scope-0.0.1.compressed.js' }, 'scope-0.0.1.compressed.js'), ' (17.7kb)')
+              )
+            )
+          ),
           ul(li(a({ href: 'https://www.github.com/bountysource/scope.js' }, 'View Source on GitHub'))),
-          ul(li(a({ href: 'todomvc/' }, 'TodoMVC'))),
-          ul(li(a({ href: 'test/' }, 'Test Suite')))
+          ul(li(a({ href: 'todomvc/index.html' }, 'TodoMVC'))),
+          ul(li(a({ href: 'test/index.html' }, 'Test Suite')))
         );
       });
     }
