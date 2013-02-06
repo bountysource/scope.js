@@ -14,7 +14,7 @@ with (scope()) {
       if (arguments[0].parentNode == options.target) return;
     }
 
-    options.target.innerHTML = '';
+    if (options.target.innerHTML) options.target.innerHTML = '';
     //while (options.target.firstChild) options.target.removeChild(options.target.firstChild);
     for (var i=0; i <= arguments.length; i++) {
       var dom_element = arguments[i];
@@ -138,12 +138,14 @@ with (scope()) {
     } else if (key == 'placeholder') {
       //add spaces to the end of placeholder so the serialized_form-hack doesn't match
       element.setAttribute(key, value + ' '); 
+    } else if ((key == 'html') || (key.toLowerCase() == 'innerhtml')) {
+      element.innerHTML = value;
     } else if (key == 'checked') {
       //add spaces to the end of placeholder so the serialized_form-hack doesn't match
       //console.log("SETTING CHECKED", value, value ? 'checked' : null)
       //element.setAttribute(key, value ? 'checked' : null); 
       element.checked = !!value;
-    } else {
+    } else if (value != undefined) {
       element.setAttribute(key, value);
     }
   });
@@ -151,7 +153,7 @@ with (scope()) {
   // simple elements
   for_each(
     'script', 'meta', 'title', 'link', 'script', 'iframe', 
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'small',
     'div', 'p', 'span', 'pre', 'img', 'br', 'hr', 'i', 'b', 'strong', 'u',
     'ul', 'ol', 'li', 'dl', 'dt', 'dd',
     'table', 'tr', 'td', 'th', 'thead', 'tbody', 'tfoot',
@@ -262,7 +264,7 @@ with (scope()) {
 
   // input types
   for_each(
-    'text', 'hidden', 'password', 'checkbox', 'radio',
+    'text', 'hidden', 'password', 'checkbox', 'radio', 'search', 'range', 'number',
     function(input_type) {
       define(input_type, function() { 
         var arguments = flatten_to_array(arguments);
@@ -273,5 +275,58 @@ with (scope()) {
       });
     }
   );
+
+  // remove a DOM element
+  define('remove_element', function(id) {
+    var e = document.getElementById(id);
+    return (e ? (e.parentNode.removeChild(e) && true) : false);
+  });
+
+  // add class to element
+  define('add_class', function(e, class_name) {
+    if (!e || has_class(e, class_name)) return e;
+    var parts = e.className.split(/\s+/);
+    parts.push(class_name);
+    e.className = parts.join(' ');
+    return e;
+  });
+
+  // remove class from element
+  define('remove_class', function(e, class_name) {
+    if (!e || !has_class(e, class_name)) return e;
+    e.className = e.className.replace((new RegExp('\s*'+class_name+'\s*')),' ').trim();
+    return e;
+  });
+
+  // check if element has class
+  define('has_class', function(e, class_name) {
+    var class_names = e.className.split(/\s+/);
+    return class_names.indexOf(class_name) >= 0;
+  });
+
+  define('hide', function(element) {
+    if (typeof(element) == 'string') element = document.getElementById(element);
+    if (element) element.style.display = 'none';
+  });
+
+  define('show', function(element) {
+    if (typeof(element) == 'string') element = document.getElementById(element);
+    if (element) element.style.display = 'block';
+  });
+
+  define('is_visible', function(element) {
+    if (typeof(element) == 'string') element = document.getElementById(element);
+    return element.style.display != 'none';
+  });
+
+  define('toggle_visibility', function(element) {
+    if (typeof(element) == 'string') element = document.getElementById(element);
+    is_visible(element) ? hide(element) : show(element);
+  });
+
+  define('inner_html', function(element, html) {
+    if (typeof(element) == 'string') element = document.getElementById(element);
+    if (element) element.innerHTML = html;
+  });
 
 }

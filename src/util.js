@@ -19,7 +19,7 @@ with (scope()) {
     var arguments = [];
     while (stack.length > 0) {
       var obj = stack.shift();
-      if (obj) {
+      if (obj || (typeof(obj) == 'number')) {
         if ((typeof(obj) == 'object') && obj.concat) {
           // array? just concat
           stack = obj.concat(stack);
@@ -74,5 +74,23 @@ with (scope()) {
     var retval = [];
     for (var i=0; i < iteratable.length; i++) if (callback(iteratable[i])) retval.push(iteratable[i]);
     return retval;
+  });
+
+  // encode html string
+  define('encode_html', function(raw_html) {
+    return encodeURIComponent(raw_html);
+  });
+
+  // decode an already encoded html string
+  define('decode_html', function(encoded_html) {
+    return decodeURIComponent(encoded_html)
+  });
+
+  // merge one hash into another. non-destructive. values in b will overwrite those in a.
+  define('merge', function(a, b) {
+    var new_hash = {};
+    for (var k in a) new_hash[k] = a[k];
+    for (var k in b) new_hash[k] = b[k];
+    return new_hash;
   });
 }

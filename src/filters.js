@@ -45,23 +45,24 @@ with (scope()) {
     return true;
   });
 
-  define('capture_action_if_called_when_filtering', function(method_name) {
-    var that = this;
-    var real_method = this[method_name];
-    define(method_name, function() {
-      var this_args = Array.prototype.slice.call(arguments);
-      if (scope.running_filters) {
-        if (scope.filter_performed_action) {
-          alert('ERROR: double action in filters');
-          return;
-        }
-        scope.filter_performed_action = function() { real_method.apply(that, this_args); };
-      } else {
-        real_method.apply(this, this_args);
-      }
-    });
-  });
-  
-  capture_action_if_called_when_filtering('set_route');
-  capture_action_if_called_when_filtering('render');
+  // NOTE: doesn't quite work right now that element() calls render()
+  // define('capture_action_if_called_when_filtering', function(method_name) {
+  //   var that = this;
+  //   var real_method = this[method_name];
+  //   define(method_name, function() {
+  //     var this_args = Array.prototype.slice.call(arguments);
+  //     if (scope.running_filters) {
+  //       if (scope.filter_performed_action) {
+  //         alert('ERROR: double action in filters');
+  //         return;
+  //       }
+  //       scope.filter_performed_action = function() { real_method.apply(that, this_args); };
+  //     } else {
+  //       real_method.apply(this, this_args);
+  //     }
+  //   });
+  // });
+  // 
+  // capture_action_if_called_when_filtering('set_route');
+  // capture_action_if_called_when_filtering('render');
 }
