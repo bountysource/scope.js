@@ -21,9 +21,9 @@ with (scope('Home', 'App')) {
 
       div({ 'class': 'row-fluid marketing' },
         div({ 'class': 'span6' },
-          h4("But why?"),
+          h4("Why use the \"with\" statement?"),
           p(
-            'Although the "with" statement has a bad reputation, it alters how variables are resolved... in a good way. ',
+            'If used correctly, compelling syntaxes can be created that vastly reduce the amount of javascript needed.',
             a({ style: 'margin-left: 15px', href: '#overview' }, 'Read Overview')
           ),
 
@@ -31,10 +31,8 @@ with (scope('Home', 'App')) {
           p(
             div(a({ href: 'https://github.com/bountysource/frontend' }, 'BountySource'), ': The funding platform for open-source software.'),
             div(a({ href: 'https://github.com/bountysource/frontend' }, 'Badger'), ': A better registrar with domains for $10 a year.')
-          )
-        ),
+          ),
 
-        div({ 'class': 'span6' },
           h4("TodoMVC?"),
           p(
             "What would a javascript framework be without the obligatory TodoMVC implementation? ",
@@ -46,8 +44,47 @@ with (scope('Home', 'App')) {
           p(
             "The scope.js test suite is built using scope.js. It's pretty basic but it gets the job done.",
             a({ style: 'margin-left: 15px', href: 'examples/test_suite/' }, 'Run Test Suite')
+          ),
+
+          h4("What's next?"),
+          p(
+            "There's a ton left to do.  The model layer needs a lot of work.  The code needs substantially more test coverage.  Cross-browser compatibility needs improvements as well."
+          )
+        ),
+
+        div({ 'class': 'span6' },
+          h4("What's it look like'?"),
+          code_block(
+            span({ style: 'color: #aaa' }, "<!doctype html>"),
+            span({ style: 'color: #aaa' }, "<html>"),
+            span({ style: 'color: #aaa' }, "<head>"),
+            span({ style: 'color: #aaa' }, "  <script src=\"scope.js\"></script>"),
+            span({ style: 'color: #aaa' }, "  <script>"),
+            "    with (scope()) {",
+            " ",
+            "      route('#', function() {",
+            "        render(",
+            "          div(",
+            "            h1({ style: \"color: red\" }, \"Hello World\"),",
+            "            p(\"Hello and \", a({ href: \"#welcome\" }, \"welcome!\"))",
+            "          )",
+            "        );",
+            "      });",
+            " ",
+            "      route('#welcome', function() {",
+            "        render(",
+            "          p(\"It's me, scope.js!\")",
+            "        );",
+            "      });",
+            " ",
+            "    }",
+            span({ style: 'color: #aaa' }, "  </script>"),
+            span({ style: 'color: #aaa' }, "</head>"),
+            span({ style: 'color: #aaa' }, "<body></body>"),
+            span({ style: 'color: #aaa' }, "</html>")
           )
         )
+
       )
     );
   });

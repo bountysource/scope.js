@@ -1,9 +1,5 @@
 with (scope('Overview', 'App')) {
 
-  define('code_block', function() {
-    return code({ style: 'display: block; white-space: pre; margin-bottom: 10px' }, flatten_to_array(arguments).join("\n"));
-  });
-
   route('#overview', function() {
     render(
       h2('Background'),
@@ -31,14 +27,17 @@ with (scope('Overview', 'App')) {
       code_block(
         "var scope = {",
         "  log: function(text) { console.log(text); },",
-        "  hello_world: function() { return 'hello world'; }",
+        "  hello_world: 'hello world'",
         "};",
         " ",
+        "// inside the scope, \"log\" and \"hello_world\" exist",
         "with (scope) {",
-        "  log(hello_world());  // outputs \"hello world\"",
+        "  log(hello_world);  // outputs \"hello world\"",
         "}",
         " ",
-        "log(hello_world());  // ReferenceError: log is not defined"
+        "// outside the scope, \"log\" and \"hello_world\" are undefined",
+        "hello_world;       // ReferenceError: hello_world is not defined",
+        "log(hello_world);  // ReferenceError: log is not defined"
       ),
       p("In this example, the \"with\" operator looks up the \"log\" property and returns a function."),
 
