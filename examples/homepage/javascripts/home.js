@@ -1,36 +1,6 @@
-with (scope('Home')) {
+with (scope('Home', 'App')) {
 
   define('latest_scope_js', { version: '0.0.1', size: '17.7kb' });
-
-  define('default_layout', function(content) {
-    return div(
-      div({ 'class': 'fork-me' },
-        a({ href: "https://github.com/bountysource/scope.js" },
-          img({ src: "https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png", alt: "Fork me on GitHub" })
-        )
-      ),
-
-      div({ 'class': 'container-narrow' },
-        div({ 'class': 'masthead' },
-          ul({ 'class': 'nav nav-pills pull-right' },
-            li({ 'class': (get_route() == '#' && 'active') }, a({ href: '#' }, 'Home')),
-            li({ 'class': (get_route() == '#overview' && 'active') }, a({ href: '#overview' }, 'Overview'))
-          ),
-          h2({ 'class': 'muted' }, 'scope.js')
-        ),
-
-        hr(),
-
-        content,
-
-        hr(),
-
-        div({ 'class': 'footer' },
-          p('© BountySource Inc. ', (new Date()).getFullYear())
-        )
-      )
-    );
-  });
 
   route('#', function() {
     render(
@@ -51,10 +21,10 @@ with (scope('Home')) {
 
       div({ 'class': 'row-fluid marketing' },
         div({ 'class': 'span6' },
-          h4('But why?'),
+          h4("But why?"),
           p(
             'Although the "with" statement has a bad reputation, it alters how variables are resolved... in a good way. ',
-            a({ style: 'margin-left: 15px', href: '#overview' }, 'Read More')
+            a({ style: 'margin-left: 15px', href: '#overview' }, 'Read Overview')
           ),
 
           h4('Who uses it?'),
@@ -79,12 +49,6 @@ with (scope('Home')) {
           )
         )
       )
-    );
-  });
-
-  route('#overview', function() {
-    render(
-      h1('Oh hai')
     );
   });
 
