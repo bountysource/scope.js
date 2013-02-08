@@ -1,6 +1,6 @@
 with (scope('Home', 'App')) {
 
-  define('latest_scope_js', { version: '0.0.1', size: '17.7kb' });
+  define('latest_scope_js', { version: '0.4.0', size: '17.7kb' });
 
   route('#', function() {
     render(
@@ -53,7 +53,7 @@ with (scope('Home', 'App')) {
         ),
 
         div({ 'class': 'span6' },
-          h4("What's it look like'?"),
+          h4("What's it look like?"),
           code_block(
             span({ style: 'color: #aaa' }, "<!doctype html>"),
             span({ style: 'color: #aaa' }, "<html>"),
@@ -73,7 +73,7 @@ with (scope('Home', 'App')) {
             " ",
             "      route('#welcome', function() {",
             "        render(",
-            "          p(\"It's me, scope.js!\")",
+            "          p(\"It's me, scope.js! \", a({ href: \"#\" }, \"Home!\"))",
             "        );",
             "      });",
             " ",
@@ -82,6 +82,9 @@ with (scope('Home', 'App')) {
             span({ style: 'color: #aaa' }, "</head>"),
             span({ style: 'color: #aaa' }, "<body></body>"),
             span({ style: 'color: #aaa' }, "</html>")
+          ),
+          div({ style: 'text-align: right; margin-top: -34px; margin-right: 10px' },
+            a({ href: 'examples/homepage/example1.html'}, "Run This Example")
           )
         )
 

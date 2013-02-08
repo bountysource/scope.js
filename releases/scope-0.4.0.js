@@ -1,4 +1,4 @@
-/* scope-0.0.1.js -- http://scopejs.net/ */
+/* scope-0.4.0.js -- http://scopejs.net/ */
 var scope = function(namespace, base) {
   if (namespace) {
     if (base && !scope.instance[base]) {

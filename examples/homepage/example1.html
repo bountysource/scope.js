@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+  <script src="../../releases/scope-0.4.0.compressed.js" type="text/javascript"></script>
+  <script>
+    with (scope()) {
+
+      route('#', function() {
+        render(
+          div(
+            h1({ style: "color: red" }, "Hello World"),
+            p("Hello and ", a({ href: "#welcome" }, "welcome!"))
+          )
+        );
+      });
+
+      route('#welcome', function() {
+        render(
+          p("It's me, scope.js! ", a({ href: "#" }, "Home!"))
+        );
+      });
+
+    }
+  </script>
+</head>
+<body></body>
+</html>
