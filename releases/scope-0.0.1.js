@@ -1,4 +1,4 @@
-/* http://scopejs.net/ */
+/* scope-0.0.1.js -- http://scopejs.net/ */
 var scope = function(namespace, base) {
   if (namespace) {
     if (base && !scope.instance[base]) {
@@ -301,7 +301,7 @@ with (scope()) {
     'ul', 'ol', 'li', 'dl', 'dt', 'dd',
     'table', 'tr', 'td', 'th', 'thead', 'tbody', 'tfoot',
     'select', 'option', 'optgroup', 'textarea', 'button', 'label', 'fieldset',
-    'header', 'section', 'footer',
+    'header', 'section', 'footer', 'code',
     function(tag) { 
       define(tag, function() { return element(tag, arguments) }); 
     }

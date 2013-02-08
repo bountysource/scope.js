@@ -1,0 +1,12 @@
+.fork-me { min-width: 970px; }
+.fork-me a { float: right; }
+.fork-me img { border: 0; }
+
+/* from bootstrap marketing template */
+.container-narrow { margin: 0 auto; width: 950px; padding: 0 10px; padding-top: 20px; padding-bottom: 40px; }
+.container-narrow > hr { margin: 30px 0; }
+.jumbotron { margin: 50px 0 30px; text-align: center; }
+.jumbotron h1 { font-size: 50px; line-height: 1; }
+.jumbotron .btn { font-size: 21px; padding: 14px 24px; }
+.marketing { margin: 30px 0; }
+.marketing p + h4 { margin-top: 28px; }
