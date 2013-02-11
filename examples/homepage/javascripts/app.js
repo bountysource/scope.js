@@ -31,7 +31,9 @@ with (scope("App")) {
   });
 
   define('code_block', function() {
-    return code({ style: 'display: block; white-space: pre; margin-bottom: 10px; color: #333' }, flatten_to_array(arguments).map(function(row) { return [row, br()]; }));
+    var elem = pre({ 'class': 'prettyprint' }, flatten_to_array(arguments).join("\n"));
+    elem.innerHTML = prettyPrintOne(elem.innerHTML);
+    return elem;
   });
 
 }

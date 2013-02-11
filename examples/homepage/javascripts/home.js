@@ -20,7 +20,7 @@ with (scope('Home', 'App')) {
       hr(),
 
       div({ 'class': 'row-fluid marketing' },
-        div({ 'class': 'span6' },
+        div({ 'class': 'span4' },
           h4("Why use the \"with\" statement?"),
           p(
             'If used correctly, compelling syntaxes can be created that vastly reduce the amount of javascript needed.',
@@ -29,37 +29,41 @@ with (scope('Home', 'App')) {
 
           h4('Who uses it?'),
           p(
-            div(a({ href: 'https://github.com/bountysource/frontend' }, 'BountySource'), ': The funding platform for open-source software.'),
+            div({ style: 'margin-bottom: 10px' }, a({ href: 'https://github.com/bountysource/frontend' }, 'BountySource'), ': The funding platform for open-source software.'),
             div(a({ href: 'https://github.com/bountysource/frontend' }, 'Badger'), ': A better registrar with domains for $10 a year.')
           ),
 
           h4("TodoMVC?"),
           p(
-            "What would a javascript framework be without the obligatory TodoMVC implementation? ",
+            "What's an MVC framework without a TodoMVC example?",
             a({ style: 'margin-left: 15px', href: 'examples/todomvc/' }, 'See Demo'),
             a({ style: 'margin-left: 15px', href: 'examples/todomvc/js/app.js' }, 'View Source')
           ),
 
           h4('What about tests?'),
           p(
-            "The scope.js test suite is built using scope.js. It's pretty basic but it gets the job done.",
+            "The scope.js test suite is pretty basic but it's better than nothing'.",
             a({ style: 'margin-left: 15px', href: 'examples/test_suite/' }, 'Run Test Suite')
           ),
 
           h4("What's next?"),
           p(
-            "There's a ton left to do.  The model layer needs a lot of work.  The code needs substantially more test coverage.  Cross-browser compatibility needs improvements as well."
+            "The model layer needs a lot of work.  The code needs substantially more test coverage.  Cross-browser compatibility needs improvements."
           )
         ),
 
-        div({ 'class': 'span6' },
+        div({ 'class': 'span8' },
           h4("What's it look like?"),
+
+          a({ href: 'examples/homepage/example1.html', style: 'float: right; margin: 10px', 'class': 'btn btn-success btn-small' }, "Run This Example"),
+
           code_block(
-            span({ style: 'color: #aaa' }, "<!doctype html>"),
-            span({ style: 'color: #aaa' }, "<html>"),
-            span({ style: 'color: #aaa' }, "<head>"),
-            span({ style: 'color: #aaa' }, "  <script src=\"scope.js\"></script>"),
-            span({ style: 'color: #aaa' }, "  <script>"),
+            "<!doctype html>",
+            "<html>",
+            "<head>",
+            "  <script src=\"scope.js\"></script>",
+            "  <script>",
+            " ",
             "    with (scope()) {",
             " ",
             "      route('#', function() {",
@@ -78,13 +82,11 @@ with (scope('Home', 'App')) {
             "      });",
             " ",
             "    }",
-            span({ style: 'color: #aaa' }, "  </script>"),
-            span({ style: 'color: #aaa' }, "</head>"),
-            span({ style: 'color: #aaa' }, "<body></body>"),
-            span({ style: 'color: #aaa' }, "</html>")
-          ),
-          div({ style: 'text-align: right; margin-top: -34px; margin-right: 10px' },
-            a({ href: 'examples/homepage/example1.html'}, "Run This Example")
+            " ",
+            "  </script>",
+            "</head>",
+            "<body></body>",
+            "</html>"
           )
         )
 
