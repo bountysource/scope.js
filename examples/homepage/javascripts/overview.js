@@ -74,7 +74,7 @@ with (scope('Overview', 'App')) {
       code_block(
         "with (scope()) {",
         "  route('#', function() {",
-        " ",
+        "    ",
         "    render(",
         "      'plain text strings',",
         "      h1('Headers'),",
@@ -93,7 +93,13 @@ with (scope('Overview', 'App')) {
         "      ),",
         "      ['arrays', b('of'), i('elements')]",
         "    );",
-        " ",
+        "    ",
+        "    // some helper methods",
+        "    var elem = div('Oh hai!');",
+        "    hide(elem);",
+        "    show(elem);",
+        "    add_class(elem, 'active');",
+        "    remove_class(elem, 'active');",
         "  }",
         "}"
       ),
@@ -255,7 +261,11 @@ with (scope('Overview', 'App')) {
         " ",
         "  // with partial parameters",
         "  var set_display_name = curry(set, 'display_name');",
-        "  set_display_name('john doe')",
+        "  set_display_name('john doe');",
+        "  ",
+        "  // handy shortcuts",
+        "  var elem1 = span('hello');",
+        "  var elem2 = div({ onClick: curry(hide, elem1) }, 'click me');",
         "}"
       )
 //
