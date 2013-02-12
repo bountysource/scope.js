@@ -46,7 +46,7 @@ with (scope('Overview', 'App')) {
         )
       ),
 
-      h2('Client-Side-Routing with route, set_route and get_route.'),
+      h2('Client-side routes map URLs to callbacks.'),
       code_block(
         "with (scope()) {",
         " ",
@@ -69,7 +69,7 @@ with (scope('Overview', 'App')) {
         "}"
       ),
 
-      h2('Creating DOM elements.'),
+      h2('DOM elements are easy to create.'),
       p("There are a handful of helpers that creating DOM elements easy.  You can nest elements and pass any number of arguments.  You can optionally pass a hash containing key/values for attributes."),
       code_block(
         "with (scope()) {",
@@ -98,7 +98,7 @@ with (scope('Overview', 'App')) {
         "}"
       ),
 
-      h2('Rendering and Layouts'),
+      h2('Render DOM elements into the page.'),
       code_block(
         "with (scope()) {",
         "  route('#', function() {",
@@ -114,7 +114,7 @@ with (scope('Overview', 'App')) {
         "}"
       ),
 
-      h2('Creating helper functions with "define"'),
+      h2('Use "define" to create helper functions.'),
       code_block(
         "with (scope()) {",
         " ",
@@ -135,7 +135,7 @@ with (scope('Overview', 'App')) {
         "}"
       ),
 
-      h2('Form Processing'),
+      h2('Form elements are serialized automatically.'),
       code_block(
         "with (scope()) {",
         " ",
@@ -161,7 +161,7 @@ with (scope('Overview', 'App')) {
         "}"
       ),
 
-      h2('Namespaces'),
+      h2('Namespace each scope to prevent overlap.'),
       code_block(
         "// defines 'foo' in the global scope from which everything inherits",
         "with (scope()) {",
@@ -184,43 +184,88 @@ with (scope('Overview', 'App')) {
         "  console.log(App.foo);",
         "  console.log(Zapp.foo);",
         " ",
-        "  ",
         "  // you must use full namespace to access .bar outside of App namespace",
         "  console.log(bar);  // ReferenceError: bar is not defined",
         "  console.log(App.bar); // works as expected",
         " ",
-        "  // Zapp.boz works as execpted",
+        "  // Zapp",
         "  console.log(Zapp.bar);  // inherited from App.bar",
         "  console.log(Zapp.boz);  // works as expected",
         " ",
         "}"
       ),
 
-      h2('Events'),
-      p('Coming soon.'),
+      h2('Update DOM automatically when data changes.'),
+      code_block(
+        "with (scope()) {",
+        "  // because of 'get', this function will re-evaluate whenever set('display_name', '...') is called",
+        "  define('live_display_name', function() {",
+        "    return div(get('display_name') || 'Not logged in');",
+        "  });",
+        " ",
+        "  route('#', function() {",
+        "    // this renders 'Not logged in' since get('display_name') returns null",
+        "    render(",
+        "      h1('Welcome'),",
+        "      live_display_name  // function reference",
+        "    );",
+        "    ",
+        "    // when we use 'set', any function that used 'get' on this key will be re-evaluated",
+        "    set('display_name', 'John Doe');",
+        "    ",
+        "  });",
+        "}"
+      ),
 
-      h2('Updating the DOM when data changes.'),
-      p('Coming soon.'),
+      h2('User initializers instead of window.onLoad'),
+      code_block(
+        "with (scope()) {",
+        "  ",
+        "  initializer(function() {",
+        "    set('user_data', {});",
+        "  });",
+        "  ",
+        "}"
+      ),
 
-      h2('Initializers'),
-      p('Coming soon.'),
+      h2('Events invoke callbacks.'),
+      code_block(
+        "with (scope()) {",
+        "  ",
+        "  route('#', function() {",
+        "    render(",
+        "      h1('Welcome!'),",
+        "      div({ onClick: div_clicked }, 'Click Me!'),",
+        "    );",
+        "  });",
+        "  ",
+        "  define('div_clicked', function(elem) {",
+        "    set_route('#welcome');",
+        "  });",
+        "  ",
+        "}"
+      ),
 
-//      h2('Curry'),
-//      code_block(
-//        "with (scope()) {",
-//        " ",
-//        "  define('process_login', function(form_data, param1, param2) {",
-//        "    console.log(arguments);"
-//    "  });",
-//      "  // curry lets you create a reference to a function that you'll use later",
-//      "  curry(process"
-//    " ",
-//      "}"
-//    ),
-
-    h2('Before/after filters'),
-      p('Coming soon.')
+      h2('Curry gives you a reference to a function.'),
+      code_block(
+        "with (scope()) {",
+        "  // these two are equivalent",
+        "  setTimeout(function() { set('display_name', 'John Doe'); }, 1000);",
+        "  setTimeout(curry(set, 'display_name', 'John Doe'), 1000);",
+        " ",
+        "  // with partial parameters",
+        "  var set_display_name = curry(set, 'display_name');",
+        "  set_display_name('john doe')",
+        "}"
+      )
+//
+//      h2('Extras'),
+//      p("Escape 'class'. Util functions (flatten_to_array, for_each, hide/show, etc). Not_found route.  scope.instance.____ for debugging"),
+//
+//      h2('Before/after filters'),
+//      p('Coming soon.')
     );
+
   });
 
 }
