@@ -254,27 +254,20 @@ with (scope()) {
     return this[options.type || 'text'](options, arguments);
   });
 
-  define('submit', function() {
-    var arguments = flatten_to_array(arguments);
-    var options = shift_options_from_args(arguments);
-    options.type = 'submit';
-    if (!options.value && arguments.length == 1) options.value = arguments.pop();
-    return element('input', options, arguments);
-  });
-
-  // input types
   for_each(
-    'text', 'hidden', 'password', 'checkbox', 'radio', 'search', 'range', 'number',
-    function(input_type) {
-      define(input_type, function() { 
-        var arguments = flatten_to_array(arguments);
-        var options = shift_options_from_args(arguments);
-        options.type = input_type;
-
-        return element('input', options, arguments);
-      });
-    }
-  );
+     'text', 'hidden', 'password', 'checkbox', 'radio', 'search', 'range', 'number', 'reset', 'submit',
+     function(input_type) {
+       define(input_type, function() { 
+         var arguments = flatten_to_array(arguments);
+         var options = shift_options_from_args(arguments);
+         options.type = input_type;
+         if (input_type == 'submit' || input_type == 'reset')
+           if (!options.value && arguments.length == 1)
+             options.value = arguments.pop();
+         return element('input', options, arguments);
+       });
+     }
+   );
 
   // remove a DOM element
   define('remove_element', function(id) {
