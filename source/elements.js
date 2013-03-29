@@ -18,19 +18,19 @@ with (scope()) {
     //while (options.target.firstChild) options.target.removeChild(options.target.firstChild);
     for (var i=0; i <= arguments.length; i++) {
       var dom_element = arguments[i];
-      
+
       // if it's a function, run it with observers
       if (typeof(dom_element) == 'function') {
         // console.log("running function")
         dom_element = observe(dom_element, function(retval, old_retval) {
           // console.log("INSIDE ELEMENT OBSERVER", retval, old_retval)
-          
+
           // if the function returns nothing, use an empty string as a place holder
           if (typeof(retval) == 'undefined') retval = '';
 
           // duplicated below, shady.
           if (['string','boolean','number'].indexOf(typeof(retval)) >= 0) retval = document.createTextNode('' + retval);
-  
+
           // replace current previous node with current
           if (old_retval && old_retval.parentNode) {
             // console.log("has parentNode and needs refresh", retval, old_retval);
@@ -41,15 +41,15 @@ with (scope()) {
           return retval;
         });
       }
-      
+
       // convert core JS types to text nodes
       if (['string','boolean','number'].indexOf(typeof(dom_element)) >= 0) dom_element = document.createTextNode('' + dom_element);
-      
+
       // insert it at the end
       if (dom_element) options.target.appendChild(dom_element);
     }
   });
-  
+
   // define('layout', function(name, callback) {
   //   var layout_elem, yield_parent;
   //   define(name, function() {
@@ -58,7 +58,7 @@ with (scope()) {
   //       layout_elem = callback(tmp_div);
   //       yield_parent = tmp_div.parentNode;
   //     }
-  //     
+  //
   //     render({ into: yield_parent, layout: false }, arguments);
   //     return layout_elem;
   //   });
@@ -117,18 +117,38 @@ with (scope()) {
           set_attribute(element, key1, retval);
         });
       } else {
-        set_attribute(element, k, options[k]);
+        if(tag == 'option' && k == 'selected') {
+          // select option tag with selected attribute needs special care
+          if(options[k] && options[k].toString() == 'true') {
+            // Only add the attribute 'selected' if it is selected
+            // otherwise leave it blank
+            set_attribute(element, k, "true")
+          }
+        } else {
+          set_attribute(element, k, options[k]);
+        }
       }
     }
-    
+
+    if(tag == 'select' && options['selected']) {
+      arguments = arguments.map(function(option) {
+        // propagate the selected option to child element of select tag
+        if(option.value == options['selected']) {
+          option.selected = true;
+        }
+
+        return option;
+      });
+    }
+
     // append child elements
     if (arguments.length > 0) render({ into: element }, arguments);
 
     return element;
   });
-  
+
   // basically setAttribute but with better class/style/placeholder support
-  define('set_attribute', function(element, key, value) { 
+  define('set_attribute', function(element, key, value) {
     //console.log("setting attribute", element, key, value)
 
     if (key == 'class') {
@@ -137,13 +157,13 @@ with (scope()) {
       element.style.cssText = value;
     } else if (key == 'placeholder') {
       //add spaces to the end of placeholder so the serialized_form-hack doesn't match
-      element.setAttribute(key, value + ' '); 
+      element.setAttribute(key, value + ' ');
     } else if ((key == 'html') || (key.toLowerCase() == 'innerhtml')) {
       element.innerHTML = value;
     } else if (key == 'checked') {
       //add spaces to the end of placeholder so the serialized_form-hack doesn't match
       //console.log("SETTING CHECKED", value, value ? 'checked' : null)
-      //element.setAttribute(key, value ? 'checked' : null); 
+      //element.setAttribute(key, value ? 'checked' : null);
       element.checked = !!value;
     } else if (value != undefined) {
       element.setAttribute(key, value);
@@ -152,22 +172,22 @@ with (scope()) {
 
   // simple elements
   for_each(
-    'script', 'meta', 'title', 'link', 'script', 'iframe', 
+    'script', 'meta', 'title', 'link', 'script', 'iframe',
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'small',
     'div', 'p', 'span', 'pre', 'img', 'br', 'hr', 'i', 'b', 'strong', 'u',
     'ul', 'ol', 'li', 'dl', 'dt', 'dd',
     'table', 'tr', 'td', 'th', 'thead', 'tbody', 'tfoot',
     'select', 'option', 'optgroup', 'textarea', 'button', 'label', 'fieldset',
     'header', 'section', 'footer', 'code',
-    function(tag) { 
-      define(tag, function() { return element(tag, arguments) }); 
+    function(tag) {
+      define(tag, function() { return element(tag, arguments) });
     }
   );
-  
-  define('a', function() { 
+
+  define('a', function() {
     var arguments = flatten_to_array(arguments);
     var options = shift_options_from_args(arguments);
-    
+
     if (options.href && options.href.call) {
       var real_callback = options.href;
       options.href = '';
@@ -186,21 +206,21 @@ with (scope()) {
 
     return element('a', options, arguments);
   });
-  
-  define('img', function() { 
+
+  define('img', function() {
     var arguments = flatten_to_array(arguments);
     var options = shift_options_from_args(arguments);
-    
+
     if (!options.src && (arguments.length == 1)) options.src = arguments.pop();
-    
+
     return element('img', options, arguments);
   });
-  
-  
+
+
   define('form', function() {
     var arguments = flatten_to_array(arguments);
     var options = shift_options_from_args(arguments);
-    
+
     if (options.action && options.action.call) {
       var real_callback = options.action;
       options.onSubmit = function(e) {
@@ -244,11 +264,11 @@ with (scope()) {
       }
       options.action = '';
     }
-    
+
     return element('form', options, arguments);
   });
 
-  define('input', function() { 
+  define('input', function() {
     var arguments = flatten_to_array(arguments);
     var options = shift_options_from_args(arguments);
     return this[options.type || 'text'](options, arguments);
@@ -266,7 +286,7 @@ with (scope()) {
   for_each(
     'text', 'hidden', 'password', 'checkbox', 'radio', 'search', 'range', 'number',
     function(input_type) {
-      define(input_type, function() { 
+      define(input_type, function() {
         var arguments = flatten_to_array(arguments);
         var options = shift_options_from_args(arguments);
         options.type = input_type;
