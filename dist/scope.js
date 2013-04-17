@@ -1,4 +1,6 @@
-/* scope-0.4.0.js -- http://scopejs.net/ */
+/* jshint -W085 */
+/* jshint -W103 */
+
 var scope = function(namespace, base) {
   if (namespace) {
     if (base && !scope.instance[base]) {
@@ -19,7 +21,8 @@ scope.data_observers = [];
 scope.data_hash = {};  
 
 scope.create_context = function(proto) {
-  function Scope() {};
+  function Scope() {}
+
   Scope.prototype = proto;
   var obj = new Scope();
   if (!obj.__proto__) obj.__proto__ = proto;
@@ -33,7 +36,9 @@ scope.instance = scope.create_context({
 });
 
 // console.log for browsers lacking support
-if (!window.console) window.console = { log: function() {} };with (scope()) {
+if (!window.console) window.console = { log: function() {} };;/* jshint -W085 */
+
+with (scope()) {
   define('redefine', function(name, callback) {
     var real_callback = this[name];
     define(name, function() {
@@ -51,7 +56,7 @@ if (!window.console) window.console = { log: function() {} };with (scope()) {
   
   define('flatten_to_array', function() {
     var stack = Array.prototype.slice.call(arguments);
-    var arguments = [];
+    var args = [];
     while (stack.length > 0) {
       var obj = stack.shift();
       if (obj || (typeof(obj) == 'number')) {
@@ -62,11 +67,11 @@ if (!window.console) window.console = { log: function() {} };with (scope()) {
           // explicitly passed arguments or childNodes object? to another function
           stack = Array.prototype.slice.call(obj).concat(stack);
         } else {
-          arguments.push(obj);
+          args.push(obj);
         }
       }
     }
-    return arguments;
+    return args;
   });
 
   define('shift_options_from_args', function(args) {
@@ -118,17 +123,19 @@ if (!window.console) window.console = { log: function() {} };with (scope()) {
 
   // decode an already encoded html string
   define('decode_html', function(encoded_html) {
-    return decodeURIComponent(encoded_html)
+    return decodeURIComponent(encoded_html);
   });
 
   // merge one hash into another. non-destructive. values in b will overwrite those in a.
   define('merge', function(a, b) {
     var new_hash = {};
     for (var k in a) new_hash[k] = a[k];
-    for (var k in b) new_hash[k] = b[k];
+    for (var j in b) new_hash[j] = b[j];
     return new_hash;
   });
 }
+;/* jshint -W085 */
+
 with (scope()) {
   scope.__initializers = [];
 
@@ -140,28 +147,31 @@ with (scope()) {
   window.onload = function() {
     for (var i=0; i < scope.__initializers.length; i++) scope.__initializers[i]();
     delete scope.__initializers;
-  }
-}with (scope()) {
+  };
+};/* jshint -W085 */
+/* jshint -W083 */
+
+with (scope()) {
 
   define('render', function() {
-    var arguments = flatten_to_array(arguments);
-    var options = shift_options_from_args(arguments);
+    var args = flatten_to_array(arguments);
+    var options = shift_options_from_args(args);
 
     options.layout = typeof(options.layout) == 'undefined' ? ((options.target||options.into) ? false : this.default_layout) : options.layout;
     options.target =  options.target || options.into || document.body;
     if (typeof(options.target) == 'string') options.target = document.getElementById(options.target);
 
     if (options.layout) {
-      arguments = options.layout(arguments);
-      if (!arguments.push) arguments = [arguments];
-      if (arguments[0].parentNode == options.target) return;
+      args = options.layout(args);
+      if (!args.push) args = [args];
+      if (args[0].parentNode == options.target) return;
     }
 
     if (options.target.innerHTML) options.target.innerHTML = '';
     //while (options.target.firstChild) options.target.removeChild(options.target.firstChild);
-    for (var i=0; i <= arguments.length; i++) {
-      var dom_element = arguments[i];
-      
+    for (var i=0; i <= args.length; i++) {
+      var dom_element = args[i];
+
       // if it's a function, run it with observers
       if (typeof(dom_element) == 'function') {
         // console.log("running function")
@@ -215,9 +225,9 @@ with (scope()) {
   //   class
   //   attribute
   define('element', function() {
-    var arguments = flatten_to_array(arguments);
-    var tag = arguments.shift();
-    var options = shift_options_from_args(arguments);
+    var args = flatten_to_array(arguments);
+    var tag = args.shift();
+    var options = shift_options_from_args(args);
 
     // first argument is element type (div, span, etc)
     var element = document.createElement(tag);
@@ -237,35 +247,35 @@ with (scope()) {
     }
 
     // runs through all on* and attaches events to the object
-    for (var k in options) {
-      if (k.indexOf('on') == 0) {
-        var callback = (function(cb) { return function() { cb.apply(element, Array.prototype.slice.call(arguments)); } })(options[k]);
+    for (var m in options) {
+      if (m.indexOf('on') === 0) {
+        var callback = (function(cb) { return function() { cb.apply(element, Array.prototype.slice.call(arguments)); }; })(options[m]);
         if (element.addEventListener) {
-          element.addEventListener(k.substring(2).toLowerCase(), callback, false);
+          element.addEventListener(m.substring(2).toLowerCase(), callback, false);
         } else {
-          element.attachEvent(k.toLowerCase(), callback);
+          element.attachEvent(m.toLowerCase(), callback);
         }
-        delete options[k];
+        delete options[m];
       }
     }
 
     // run through rest of the attributes
-    for (var k in options) {
-      if (typeof(options[k]) == 'function') {
+    for (var n in options) {
+      if (typeof(options[n]) == 'function') {
         //console.log("LIVE OBSERVER")
 
-        var key1 = k;
-        observe(options[k], function(retval) {
+        var key1 = n;
+        observe(options[n], function(retval) {
           //console.log("SETTING LIVE OBSERVER", retval, element, key1)
           set_attribute(element, key1, retval);
         });
       } else {
-        set_attribute(element, k, options[k]);
+        set_attribute(element, n, options[n]);
       }
     }
     
     // append child elements
-    if (arguments.length > 0) render({ into: element }, arguments);
+    if (args.length > 0) render({ into: element }, args);
 
     return element;
   });
@@ -288,7 +298,7 @@ with (scope()) {
       //console.log("SETTING CHECKED", value, value ? 'checked' : null)
       //element.setAttribute(key, value ? 'checked' : null); 
       element.checked = !!value;
-    } else if (value != undefined) {
+    } else if (value !== undefined) {
       element.setAttribute(key, value);
     }
   });
@@ -301,15 +311,15 @@ with (scope()) {
     'ul', 'ol', 'li', 'dl', 'dt', 'dd',
     'table', 'tr', 'td', 'th', 'thead', 'tbody', 'tfoot',
     'select', 'option', 'optgroup', 'textarea', 'button', 'label', 'fieldset',
-    'header', 'section', 'footer', 'code',
+    'header', 'section', 'footer',
     function(tag) { 
-      define(tag, function() { return element(tag, arguments) }); 
+      define(tag, function() { return element(tag, arguments); });
     }
   );
   
   define('a', function() { 
-    var arguments = flatten_to_array(arguments);
-    var options = shift_options_from_args(arguments);
+    var args = flatten_to_array(arguments);
+    var options = shift_options_from_args(args);
     
     if (options.href && options.href.call) {
       var real_callback = options.href;
@@ -317,32 +327,36 @@ with (scope()) {
       options.onClick = function(e) {
         stop_event(e);
         real_callback();
-      }
-    } else if (options.href && options.href.indexOf('#') == 0) {
-      // creating a new function for each link is expensive, so create once and save
-      if (!this.a.click_handler) this.a.click_handler = function(e) {
-        stop_event(e);
-        set_route('#' + this.href.split('#')[1]);
       };
-      options.onClick = this.a.click_handler;
     }
+//    else if (options.href && options.href.indexOf('#') == 0) {
+//      // creating a new function for each link is expensive, so create once and save
+//      if (!this.a.click_handler) this.a.click_handler = function(e) {
+//        // skip optimization if a key is pressed or it was a middle click
+//        if (!(e.metaKey || e.ctrlKey || e.altKey || e.shiftKey || (e.which == 2))) {
+//          stop_event(e);
+//          set_route('#' + this.href.split('#')[1]);
+//        }
+//      };
+//      options.onClick = this.a.click_handler;
+//    }
 
-    return element('a', options, arguments);
+    return element('a', options, args);
   });
   
   define('img', function() { 
-    var arguments = flatten_to_array(arguments);
-    var options = shift_options_from_args(arguments);
+    var args = flatten_to_array(arguments);
+    var options = shift_options_from_args(args);
     
-    if (!options.src && (arguments.length == 1)) options.src = arguments.pop();
+    if (!options.src && (args.length == 1)) options.src = args.pop();
     
-    return element('img', options, arguments);
+    return element('img', options, args);
   });
   
   
   define('form', function() {
-    var arguments = flatten_to_array(arguments);
-    var options = shift_options_from_args(arguments);
+    var args = flatten_to_array(arguments);
+    var options = shift_options_from_args(args);
     
     if (options.action && options.action.call) {
       var real_callback = options.action;
@@ -362,7 +376,7 @@ with (scope()) {
             }
 
             var name = elems[i].name;
-            if (name && (value != null)) {
+            if (name && (value !== null)) {
               // TODO: currently only supports foo[] and foo[bar]. make recursive so nested works.
               if (name.substring(name.length - 2) == '[]') {
                 name = name.substring(0,name.length - 2);
@@ -384,37 +398,31 @@ with (scope()) {
         }
 
         real_callback(serialized_form);
-      }
+      };
       options.action = '';
     }
     
-    return element('form', options, arguments);
+    return element('form', options, args);
   });
 
   define('input', function() { 
-    var arguments = flatten_to_array(arguments);
-    var options = shift_options_from_args(arguments);
-    return this[options.type || 'text'](options, arguments);
-  });
-
-  define('submit', function() {
-    var arguments = flatten_to_array(arguments);
-    var options = shift_options_from_args(arguments);
-    options.type = 'submit';
-    if (!options.value && arguments.length == 1) options.value = arguments.pop();
-    return element('input', options, arguments);
+    var args = flatten_to_array(arguments);
+    var options = shift_options_from_args(args);
+    return this[options.type || 'text'](options, args);
   });
 
   // input types
   for_each(
-    'text', 'hidden', 'password', 'checkbox', 'radio', 'search', 'range', 'number',
+    'text', 'hidden', 'password', 'checkbox', 'radio', 'search', 'range', 'number', 'reset', 'submit', 'url', 'email',
     function(input_type) {
       define(input_type, function() { 
-        var arguments = flatten_to_array(arguments);
-        var options = shift_options_from_args(arguments);
+        var args = flatten_to_array(arguments);
+        var options = shift_options_from_args(args);
         options.type = input_type;
-
-        return element('input', options, arguments);
+        if (input_type == 'submit' || input_type == 'reset')
+          if (!options.value && args.length == 1)
+            options.value = args.pop();
+        return element('input', options, args);
       });
     }
   );
@@ -437,7 +445,7 @@ with (scope()) {
   // remove class from element
   define('remove_class', function(e, class_name) {
     if (!e || !has_class(e, class_name)) return e;
-    e.className = e.className.replace((new RegExp('\s*'+class_name+'\s*')),' ').trim();
+    e.className = e.className.replace((new RegExp('\\s*'+class_name+'\\s*')),' ').trim();
     return e;
   });
 
@@ -464,7 +472,7 @@ with (scope()) {
 
   define('toggle_visibility', function(element) {
     if (typeof(element) == 'string') element = document.getElementById(element);
-    is_visible(element) ? hide(element) : show(element);
+    (is_visible(element) ? hide : show)(element);
   });
 
   define('inner_html', function(element, html) {
@@ -472,162 +480,17 @@ with (scope()) {
     if (element) element.innerHTML = html;
   });
 
+  define('in_dom', function(element) {
+    if (element.parentNode === null) return false;
+    else if (element.parentNode == document.body) return true;
+    else return in_dom(element);
+  });
+
 }
-scope.routes = [];
+;/* jshint -W085 */
+/* jshint -W103 */
 
 with (scope()) {
-  // check for new routes on the browser bar every 100ms
-  initializer(function() {
-    var callback = function() {
-      setTimeout(callback, 100);
-      var hash = get_route();
-      if (hash != scope.current_route) set_route(hash, { skip_updating_browser_bar: true });
-    }
-    
-    // run once all other initializers finish
-    setTimeout(callback, 0);
-  });
- 
-  // define a route
-  //   route('#', function() {})  or  route({ '#': function(){}, '#a': function(){} })
-  define('route', function(path, callback) {
-    if (typeof(path) == 'string') {
-      scope.routes.push({
-        regex: (new RegExp("^" + path.replace(/^#\//,'#').replace(/:[a-z_]+/g, '([^/]*)') + '$')),
-        callback: callback,
-        context: this
-      });
-    } else {
-      for (var key in path) {
-        this.route(key, path[key]);
-      }
-    }
-  });
-
-  // return the current route as a string from browser bar (#/foo becomes #foo)
-  define('get_route', function() {
-    var r = '#' + ((window.location.href.match(/#\/?(.*)/)||[])[1] || '').split('?')[0];
-    return r;
-  });
-
-  // return a hash of params for URLS like:   #some/url?param1=foobar
-  define('get_params', function() {
-    var hash = {};
-    var qs = ((window.location.href.match(/#?\/?.*?\?(.*)/)||[])[1] || '');
-    var pairs = qs.split('&');
-    for (var i=0; i < pairs.length; i++) {
-      var target = hash;
-      var kv = pairs[i].split('=',2);
-      if (kv.length != 2) continue;
-
-      var this_value = unescape(kv[1]);
-      if (this_value == 'true') this_value = true;
-      else if (this_value == 'false') this_value = false;
-
-      // handle nested hashes and arrays in params
-      var key_parts = unescape(kv[0]).split('[');
-      for (var j=0; j < key_parts.length; j++) {
-        var this_key = key_parts[j].replace(/\]$/,'');
-        var next_key = (key_parts.length > j+1) ? key_parts[j+1].replace(/\]$/,'') : null;
-        
-        // if there's not a next_key set the value... otherwise go a level deeper inception-style
-        if (next_key == null) {
-          if (this_key == '') target.push(this_value);
-          else target[this_key] = this_value;
-        } else {
-          if (!target[this_key]) target[this_key] = (next_key == '' ? [] : {});
-          target = target[this_key];
-        }
-      }
-    }
-    return hash;
-  });
-
-  define('to_param', function(params) {
-    var qs = "";
-    for (var k in params) qs += ((qs.length == 0 ? '?' : '&') + k + '=' + params[k]);
-    return qs;
-  });
-
-  define('set_route', function(path, options) {
-    // absolute URL?
-    if (!path.match(/^#/)) {
-      if (window.location.href.split('#')[0] == path.split('#')[0]) {
-        path = '#'+path.split('#',2)[1];
-      } else {
-        window.location.href = path;
-        return;
-      }
-    }
-    
-    // strip leading slash (#/foo --> #foo) 
-    path = path.replace(/^#\//,'#');
-    
-    // super hax to fix layout bug
-    if (document.getElementById('_content')) {
-      document.getElementById('_content').setAttribute('id','content');
-    }
-    
-    if (!options) options = {};
-
-    if (options.params) {
-      if (query_string) path = path.split('?')[0];
-      path += to_param(options.params);
-    }
-
-    if (!options.skip_updating_browser_bar) {
-      if (options.replace) {
-        window.location.replace(window.location.href.split('#')[0] + path);
-      } else {
-        window.location.href = window.location.href.split('#')[0] + path;
-      }
-    }
-    scope.current_route = path;
-
-    if (options.reload_page) {
-      window.location.reload();
-      return;
-    }
-    
-    // register a pageview with google analytics
-    if (typeof(_gaq) == 'object') _gaq.push(['_trackPageview', path]);
-
-    // replace path variable with get_route's logic to strip query params
-    path = get_route();
-
-    for (var i=0; i < scope.routes.length; i++) {
-      var route = scope.routes[i];
-      var matches = path.match(route.regex);
-      if (matches) {
-        // scroll to the top of newly loaded page --- CAB
-        window.scrollTo(0, 0);
-        
-        if (!route.context.run_filters('before')) return;
-        route.callback.apply(null, matches.slice(1));
-        route.context.run_filters('after');
-        return;
-      }
-    }
-
-    // page not found
-    for (var i=0; i < scope.routes.length; i++) {
-      var route = scope.routes[i];
-      var matches = '#not_found'.match(route.regex);
-      if (matches) {
-        // scroll to the top of newly loaded page --- CAB
-        window.scrollTo(0, 0);
-        
-        if (!route.context.run_filters('before')) return;
-        route.callback.apply(null, matches.slice(1));
-        route.context.run_filters('after');
-        return;
-      }
-    }
-
-    // not found and no #not_found route
-    alert('404 not found: ' + path);
-  });
-}with (scope()) {
 
   define('before_filter', function(name, callback) {
     if (!callback) {
@@ -694,7 +557,54 @@ with (scope()) {
   // 
   // capture_action_if_called_when_filtering('set_route');
   // capture_action_if_called_when_filtering('render');
-}with (scope()) {
+};/* jshint -W085 */
+
+with (scope('JSONP')) {
+
+  initializer(function() {
+    scope.jsonp_callback_sequence = 0;
+    scope.jsonp_callbacks = {};
+  });
+
+  // usage: JSONP.get({ url: ..., method: ..., callback: ..., params: ... });
+  define('get', function(options) {
+    var callback_name = 'callback_' + scope.jsonp_callback_sequence++;
+
+    var url = options.url;
+
+    // default params
+    if (!options.params) options.params = {};
+    options.params.cache = (new Date().getTime());
+    options.params.callback = 'scope.jsonp_callbacks.' + callback_name;
+    if (options.method != 'GET') options.params._method = options.method;
+
+    // params to url string
+    for (var key in options.params) {
+      url += (url.indexOf('?') == -1 ? '?' : '&');
+      url += key + '=' + encode_html(options.params[key]||'');
+    }
+
+    // TODO: alert if url is too long
+    var script = document.createElement("script");        
+    script.async = true;
+    script.type = 'text/javascript';
+    script.src = url;
+
+    scope.jsonp_callbacks[callback_name] = function(response) {
+      delete scope.jsonp_callbacks[callback_name];
+      var head = document.getElementsByTagName('head')[0];
+      head.removeChild(script);
+      options.callback.call(null,response);
+    };
+
+    var head = document.getElementsByTagName('head')[0];
+    head.appendChild(script);
+  });
+  
+}
+;/* jshint -W085 */
+
+with (scope()) {
 
   define('observe', function(method, callback, old_retval) {
     // add a new array to the stack to track gets
@@ -742,7 +652,7 @@ with (scope()) {
     // put back the ones we're not gonna use
     scope.data_observers = observers_skipped;
 
-    for (var i=0; i < observers_to_run.length; i++) observe(observers_to_run[i].method, observers_to_run[i].callback, observers_to_run[i].retval);
+    for (var j=0; j < observers_to_run.length; j++) observe(observers_to_run[j].method, observers_to_run[j].callback, observers_to_run[j].retval);
 
     // explicit for now
     return null;
@@ -757,49 +667,170 @@ with (scope()) {
 }
 
 
-with (scope('JSONP')) {
+;/* jshint -W085 */
 
+scope.routes = [];
+
+with (scope()) {
+  // check for new routes on the browser bar every 100ms
   initializer(function() {
-    scope.jsonp_callback_sequence = 0;
-    scope.jsonp_callbacks = {};
+    var callback = function() {
+      setTimeout(callback, 100);
+      var hash = get_route();
+      if (hash != scope.current_route) set_route(hash, { skip_updating_browser_bar: true });
+    };
+    
+    // run once all other initializers finish
+    if (scope.routes.length > 0) setTimeout(callback, 0);
+  });
+ 
+  // define a route
+  //   route('#', function() {})  or  route({ '#': function(){}, '#a': function(){} })
+  define('route', function(path, callback) {
+    if (typeof(path) == 'string') {
+      scope.routes.push({
+        regex: (new RegExp("^" + path.replace(/^#\//,'#').replace(/:[a-z_]+/g, '([^/]*)') + '$')),
+        callback: callback,
+        context: this
+      });
+    } else {
+      for (var key in path) {
+        this.route(key, path[key]);
+      }
+    }
   });
 
-  // usage: JSONP.get({ url: ..., method: ..., callback: ..., params: ... });
-  define('get', function(options) {
-    var callback_name = 'callback_' + scope.jsonp_callback_sequence++;
+  // return the current route as a string from browser bar (#/foo becomes #foo)
+  define('get_route', function() {
+    var r = '#' + ((window.location.href.match(/#\/?(.*)/)||[])[1] || '').split('?')[0];
+    return r;
+  });
 
-    var url = options.url;
+  // return a hash of params for URLS like:   #some/url?param1=foobar
+  define('get_params', function() {
+    var hash = {};
+    var qs = ((window.location.href.match(/#?\/?.*?\?(.*)/)||[])[1] || '');
+    var pairs = qs.split('&');
+    for (var i=0; i < pairs.length; i++) {
+      var target = hash;
+      var kv = pairs[i].split('=',2);
+      if (kv.length != 2) continue;
 
-    // default params
-    if (!options.params) options.params = {};
-    options.params.cache = (new Date().getTime());
-    options.params.callback = 'scope.jsonp_callbacks.' + callback_name;
-    if (options.method != 'GET') options.params._method = options.method;
+      var this_value = unescape(kv[1]);
+      if (this_value == 'true') this_value = true;
+      else if (this_value == 'false') this_value = false;
 
-    // params to url string
-    for (var key in options.params) {
-      url += (url.indexOf('?') == -1 ? '?' : '&');
-      url += key + '=' + encode_html(options.params[key]||'');
+      // handle nested hashes and arrays in params
+      var key_parts = unescape(kv[0]).split('[');
+      for (var j=0; j < key_parts.length; j++) {
+        var this_key = key_parts[j].replace(/\]$/,'');
+        var next_key = (key_parts.length > j+1) ? key_parts[j+1].replace(/\]$/,'') : null;
+        
+        // if there's not a next_key set the value... otherwise go a level deeper inception-style
+        if (next_key === null) {
+          if (this_key === '') target.push(this_value);
+          else target[this_key] = this_value;
+        } else {
+          if (!target[this_key]) target[this_key] = (next_key === '' ? [] : {});
+          target = target[this_key];
+        }
+      }
+    }
+    return hash;
+  });
+
+  define('to_param', function(params) {
+    var qs = "";
+    for (var k in params) qs += ((qs.length === 0 ? '?' : '&') + k + '=' + params[k]);
+    return qs;
+  });
+
+  define('set_route', function(path, options) {
+    // absolute URL?
+    if (!path.match(/^#/)) {
+      if (window.location.href.split('#')[0] == path.split('#')[0]) {
+        path = '#'+path.split('#',2)[1];
+      } else {
+        window.location.href = path;
+        return;
+      }
+    }
+    
+    // strip leading slash (#/foo --> #foo) 
+    path = path.replace(/^#\//,'#');
+    
+    // super hax to fix layout bug
+    if (document.getElementById('_content')) {
+      document.getElementById('_content').setAttribute('id','content');
+    }
+    
+    if (!options) options = {};
+
+    if (options.params) {
+      if (query_string) path = path.split('?')[0];
+      path += to_param(options.params);
     }
 
-    // TODO: alert if url is too long
-    var script = document.createElement("script");        
-    script.async = true;
-    script.type = 'text/javascript';
-    script.src = url;
+    if (!options.skip_updating_browser_bar) {
+      if (options.replace) {
+        window.location.replace(window.location.href.split('#')[0] + path);
+      } else {
+        window.location.href = window.location.href.split('#')[0] + path;
+      }
+    }
+    scope.current_route = path;
 
-    scope.jsonp_callbacks[callback_name] = function(response) {
-      delete scope.jsonp_callbacks[callback_name];
-      var head = document.getElementsByTagName('head')[0];
-      head.removeChild(script);
-      options.callback.call(null,response);
-    };
+    if (options.reload_page) {
+      window.location.reload();
+      return;
+    }
+    
+    // register a pageview with google analytics
+    if (typeof(_gaq) == 'object') _gaq.push(['_trackPageview', path]);
 
-    var head = document.getElementsByTagName('head')[0];
-    head.appendChild(script);
+    // replace path variable with get_route's logic to strip query params
+    path = get_route();
+
+    // set root level params hash
+    scope.instance.params = get_params();
+
+    for (var i=0; i < scope.routes.length; i++) {
+      var route = scope.routes[i];
+      var matches = path.match(route.regex);
+      if (matches) {
+        // scroll to the top of newly loaded page --- CAB
+        window.scrollTo(0, 0);
+        
+        if (!route.context.run_filters('before')) return;
+        route.callback.apply(null, matches.slice(1));
+        route.context.run_filters('after');
+        return;
+      }
+    }
+
+    // register a pageview with google analytics for not_found
+    if (typeof(_gaq) == 'object') _gaq.push(['_trackPageview', '#not_found?path=' + encodeURIComponent(path)]);
+
+    // page not found
+    for (j=0; j < scope.routes.length; i++) {
+      var route2 = scope.routes[i];
+      var matches2 = '#not_found'.match(route2.regex);
+      if (matches2) {
+        // scroll to the top of newly loaded page --- CAB
+        window.scrollTo(0, 0);
+        
+        if (!route2.context.run_filters('before')) return;
+        route2.callback.apply(null, matches2.slice(1));
+        route2.context.run_filters('after');
+        return;
+      }
+    }
+
+    // not found and no #not_found route
+    alert('404 not found: ' + path);
   });
-  
-}
+};/* jshint -W085 */
+
 with (scope('StorageBase')) {
   define('namespaced', function(name) {
     return Storage.namespace ? Storage.namespace + '_' + name : name;
@@ -844,7 +875,7 @@ with (scope('Cookies', 'StorageBase')) {
     var ca = document.cookie.split(';');
     for(var i=0; i<ca.length; i++) {
       var name = ca[i].split('=')[0].replace(/\s+/,'');
-      if (!((options.except||[]).map(namespaced).indexOf(name) >= 0)) remove(strip_namespace(name));
+      if ((options.except||[]).map(namespaced).indexOf(name) == -1) remove(strip_namespace(name));
     }
   });
 }
@@ -869,7 +900,7 @@ with (scope('Local', 'StorageBase')) {
   define('clear', function(options) {
     options = options || {};
     for (var attr in window.localStorage) {
-      if (!((options.except||[]).map(namespaced).indexOf(attr) >= 0)) remove(strip_namespace(attr));
+      if ((options.except||[]).map(namespaced).indexOf(attr) == -1) remove(strip_namespace(attr));
     }
   });
 }

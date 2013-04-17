@@ -1,3 +1,5 @@
+/* jshint -W085 */
+
 with (scope()) {
   define('redefine', function(name, callback) {
     var real_callback = this[name];
@@ -16,7 +18,7 @@ with (scope()) {
   
   define('flatten_to_array', function() {
     var stack = Array.prototype.slice.call(arguments);
-    var arguments = [];
+    var args = [];
     while (stack.length > 0) {
       var obj = stack.shift();
       if (obj || (typeof(obj) == 'number')) {
@@ -27,11 +29,11 @@ with (scope()) {
           // explicitly passed arguments or childNodes object? to another function
           stack = Array.prototype.slice.call(obj).concat(stack);
         } else {
-          arguments.push(obj);
+          args.push(obj);
         }
       }
     }
-    return arguments;
+    return args;
   });
 
   define('shift_options_from_args', function(args) {
@@ -83,14 +85,14 @@ with (scope()) {
 
   // decode an already encoded html string
   define('decode_html', function(encoded_html) {
-    return decodeURIComponent(encoded_html)
+    return decodeURIComponent(encoded_html);
   });
 
   // merge one hash into another. non-destructive. values in b will overwrite those in a.
   define('merge', function(a, b) {
     var new_hash = {};
     for (var k in a) new_hash[k] = a[k];
-    for (var k in b) new_hash[k] = b[k];
+    for (var j in b) new_hash[j] = b[j];
     return new_hash;
   });
 }

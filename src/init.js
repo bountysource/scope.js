@@ -1,3 +1,6 @@
+/* jshint -W085 */
+/* jshint -W103 */
+
 var scope = function(namespace, base) {
   if (namespace) {
     if (base && !scope.instance[base]) {
@@ -18,7 +21,8 @@ scope.data_observers = [];
 scope.data_hash = {};  
 
 scope.create_context = function(proto) {
-  function Scope() {};
+  function Scope() {}
+
   Scope.prototype = proto;
   var obj = new Scope();
   if (!obj.__proto__) obj.__proto__ = proto;

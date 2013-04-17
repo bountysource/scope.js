@@ -1,24 +1,27 @@
+/* jshint -W085 */
+/* jshint -W083 */
+
 with (scope()) {
 
   define('render', function() {
-    var arguments = flatten_to_array(arguments);
-    var options = shift_options_from_args(arguments);
+    var args = flatten_to_array(arguments);
+    var options = shift_options_from_args(args);
 
     options.layout = typeof(options.layout) == 'undefined' ? ((options.target||options.into) ? false : this.default_layout) : options.layout;
     options.target =  options.target || options.into || document.body;
     if (typeof(options.target) == 'string') options.target = document.getElementById(options.target);
 
     if (options.layout) {
-      arguments = options.layout(arguments);
-      if (!arguments.push) arguments = [arguments];
-      if (arguments[0].parentNode == options.target) return;
+      args = options.layout(args);
+      if (!args.push) args = [args];
+      if (args[0].parentNode == options.target) return;
     }
 
     if (options.target.innerHTML) options.target.innerHTML = '';
     //while (options.target.firstChild) options.target.removeChild(options.target.firstChild);
-    for (var i=0; i <= arguments.length; i++) {
-      var dom_element = arguments[i];
-      
+    for (var i=0; i <= args.length; i++) {
+      var dom_element = args[i];
+
       // if it's a function, run it with observers
       if (typeof(dom_element) == 'function') {
         // console.log("running function")
@@ -72,9 +75,9 @@ with (scope()) {
   //   class
   //   attribute
   define('element', function() {
-    var arguments = flatten_to_array(arguments);
-    var tag = arguments.shift();
-    var options = shift_options_from_args(arguments);
+    var args = flatten_to_array(arguments);
+    var tag = args.shift();
+    var options = shift_options_from_args(args);
 
     // first argument is element type (div, span, etc)
     var element = document.createElement(tag);
@@ -94,35 +97,35 @@ with (scope()) {
     }
 
     // runs through all on* and attaches events to the object
-    for (var k in options) {
-      if (k.indexOf('on') == 0) {
-        var callback = (function(cb) { return function() { cb.apply(element, Array.prototype.slice.call(arguments)); } })(options[k]);
+    for (var m in options) {
+      if (m.indexOf('on') === 0) {
+        var callback = (function(cb) { return function() { cb.apply(element, Array.prototype.slice.call(arguments)); }; })(options[m]);
         if (element.addEventListener) {
-          element.addEventListener(k.substring(2).toLowerCase(), callback, false);
+          element.addEventListener(m.substring(2).toLowerCase(), callback, false);
         } else {
-          element.attachEvent(k.toLowerCase(), callback);
+          element.attachEvent(m.toLowerCase(), callback);
         }
-        delete options[k];
+        delete options[m];
       }
     }
 
     // run through rest of the attributes
-    for (var k in options) {
-      if (typeof(options[k]) == 'function') {
+    for (var n in options) {
+      if (typeof(options[n]) == 'function') {
         //console.log("LIVE OBSERVER")
 
-        var key1 = k;
-        observe(options[k], function(retval) {
+        var key1 = n;
+        observe(options[n], function(retval) {
           //console.log("SETTING LIVE OBSERVER", retval, element, key1)
           set_attribute(element, key1, retval);
         });
       } else {
-        set_attribute(element, k, options[k]);
+        set_attribute(element, n, options[n]);
       }
     }
     
     // append child elements
-    if (arguments.length > 0) render({ into: element }, arguments);
+    if (args.length > 0) render({ into: element }, args);
 
     return element;
   });
@@ -145,7 +148,7 @@ with (scope()) {
       //console.log("SETTING CHECKED", value, value ? 'checked' : null)
       //element.setAttribute(key, value ? 'checked' : null); 
       element.checked = !!value;
-    } else if (value != undefined) {
+    } else if (value !== undefined) {
       element.setAttribute(key, value);
     }
   });
@@ -158,15 +161,15 @@ with (scope()) {
     'ul', 'ol', 'li', 'dl', 'dt', 'dd',
     'table', 'tr', 'td', 'th', 'thead', 'tbody', 'tfoot',
     'select', 'option', 'optgroup', 'textarea', 'button', 'label', 'fieldset',
-    'header', 'section', 'footer', 'code',
+    'header', 'section', 'footer',
     function(tag) { 
-      define(tag, function() { return element(tag, arguments) }); 
+      define(tag, function() { return element(tag, arguments); });
     }
   );
   
   define('a', function() { 
-    var arguments = flatten_to_array(arguments);
-    var options = shift_options_from_args(arguments);
+    var args = flatten_to_array(arguments);
+    var options = shift_options_from_args(args);
     
     if (options.href && options.href.call) {
       var real_callback = options.href;
@@ -174,32 +177,36 @@ with (scope()) {
       options.onClick = function(e) {
         stop_event(e);
         real_callback();
-      }
-    } else if (options.href && options.href.indexOf('#') == 0) {
-      // creating a new function for each link is expensive, so create once and save
-      if (!this.a.click_handler) this.a.click_handler = function(e) {
-        stop_event(e);
-        set_route('#' + this.href.split('#')[1]);
       };
-      options.onClick = this.a.click_handler;
     }
+//    else if (options.href && options.href.indexOf('#') == 0) {
+//      // creating a new function for each link is expensive, so create once and save
+//      if (!this.a.click_handler) this.a.click_handler = function(e) {
+//        // skip optimization if a key is pressed or it was a middle click
+//        if (!(e.metaKey || e.ctrlKey || e.altKey || e.shiftKey || (e.which == 2))) {
+//          stop_event(e);
+//          set_route('#' + this.href.split('#')[1]);
+//        }
+//      };
+//      options.onClick = this.a.click_handler;
+//    }
 
-    return element('a', options, arguments);
+    return element('a', options, args);
   });
   
   define('img', function() { 
-    var arguments = flatten_to_array(arguments);
-    var options = shift_options_from_args(arguments);
+    var args = flatten_to_array(arguments);
+    var options = shift_options_from_args(args);
     
-    if (!options.src && (arguments.length == 1)) options.src = arguments.pop();
+    if (!options.src && (args.length == 1)) options.src = args.pop();
     
-    return element('img', options, arguments);
+    return element('img', options, args);
   });
   
   
   define('form', function() {
-    var arguments = flatten_to_array(arguments);
-    var options = shift_options_from_args(arguments);
+    var args = flatten_to_array(arguments);
+    var options = shift_options_from_args(args);
     
     if (options.action && options.action.call) {
       var real_callback = options.action;
@@ -219,7 +226,7 @@ with (scope()) {
             }
 
             var name = elems[i].name;
-            if (name && (value != null)) {
+            if (name && (value !== null)) {
               // TODO: currently only supports foo[] and foo[bar]. make recursive so nested works.
               if (name.substring(name.length - 2) == '[]') {
                 name = name.substring(0,name.length - 2);
@@ -241,37 +248,31 @@ with (scope()) {
         }
 
         real_callback(serialized_form);
-      }
+      };
       options.action = '';
     }
     
-    return element('form', options, arguments);
+    return element('form', options, args);
   });
 
   define('input', function() { 
-    var arguments = flatten_to_array(arguments);
-    var options = shift_options_from_args(arguments);
-    return this[options.type || 'text'](options, arguments);
-  });
-
-  define('submit', function() {
-    var arguments = flatten_to_array(arguments);
-    var options = shift_options_from_args(arguments);
-    options.type = 'submit';
-    if (!options.value && arguments.length == 1) options.value = arguments.pop();
-    return element('input', options, arguments);
+    var args = flatten_to_array(arguments);
+    var options = shift_options_from_args(args);
+    return this[options.type || 'text'](options, args);
   });
 
   // input types
   for_each(
-    'text', 'hidden', 'password', 'checkbox', 'radio', 'search', 'range', 'number',
+    'text', 'hidden', 'password', 'checkbox', 'radio', 'search', 'range', 'number', 'reset', 'submit', 'url', 'email',
     function(input_type) {
       define(input_type, function() { 
-        var arguments = flatten_to_array(arguments);
-        var options = shift_options_from_args(arguments);
+        var args = flatten_to_array(arguments);
+        var options = shift_options_from_args(args);
         options.type = input_type;
-
-        return element('input', options, arguments);
+        if (input_type == 'submit' || input_type == 'reset')
+          if (!options.value && args.length == 1)
+            options.value = args.pop();
+        return element('input', options, args);
       });
     }
   );
@@ -294,7 +295,7 @@ with (scope()) {
   // remove class from element
   define('remove_class', function(e, class_name) {
     if (!e || !has_class(e, class_name)) return e;
-    e.className = e.className.replace((new RegExp('\s*'+class_name+'\s*')),' ').trim();
+    e.className = e.className.replace((new RegExp('\\s*'+class_name+'\\s*')),' ').trim();
     return e;
   });
 
@@ -321,12 +322,18 @@ with (scope()) {
 
   define('toggle_visibility', function(element) {
     if (typeof(element) == 'string') element = document.getElementById(element);
-    is_visible(element) ? hide(element) : show(element);
+    (is_visible(element) ? hide : show)(element);
   });
 
   define('inner_html', function(element, html) {
     if (typeof(element) == 'string') element = document.getElementById(element);
     if (element) element.innerHTML = html;
+  });
+
+  define('in_dom', function(element) {
+    if (element.parentNode === null) return false;
+    else if (element.parentNode == document.body) return true;
+    else return in_dom(element);
   });
 
 }

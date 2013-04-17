@@ -1,3 +1,6 @@
+/* jshint -W085 */
+/* jshint -W103 */
+
 with (scope()) {
 
   define('before_filter', function(name, callback) {

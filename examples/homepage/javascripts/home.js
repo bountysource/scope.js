@@ -1,6 +1,6 @@
 with (scope('Home', 'App')) {
 
-  define('latest_scope_js', { version: '0.4.0', size: '17.7kb' });
+  define('latest_scope_js', { version: '0.5.0', size: '13.3kb', gziped: '4.3kb' });
 
   route('#', function() {
     render(
@@ -11,9 +11,9 @@ with (scope('Home', 'App')) {
           br(),
           "It provides DOM generation, client-side routing, event-based DOM and more."
         ),
-        a({ 'class': 'btn btn-large btn-success', href: 'releases/scope-'+latest_scope_js.version+'.compressed.js' }, 'Download: ' + latest_scope_js.version),
+        a({ 'class': 'btn btn-large btn-success', href: 'dist/scope.min.js' }, 'Download: ' + latest_scope_js.version),
         div(
-          "Size: ", strong(latest_scope_js.size), " (minified)"
+          "Size: ", strong(latest_scope_js.size), " minified; ", strong(latest_scope_js.gziped), " gziped"
         )
       ),
 
@@ -29,7 +29,7 @@ with (scope('Home', 'App')) {
 
           h4('Who uses it?'),
           p(
-            div({ style: 'margin-bottom: 10px' }, a({ href: 'https://github.com/bountysource/frontend' }, 'BountySource'), ': The funding platform for open-source software.'),
+            div({ style: 'margin-bottom: 10px' }, a({ href: 'https://github.com/bountysource/frontend' }, 'Bountysource'), ': The funding platform for open-source software.'),
             div(a({ href: 'https://github.com/bountysource/frontend' }, 'Badger'), ': A better registrar with domains for $10 a year.')
           ),
 

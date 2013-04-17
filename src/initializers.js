@@ -1,3 +1,5 @@
+/* jshint -W085 */
+
 with (scope()) {
   scope.__initializers = [];
 
@@ -9,5 +11,5 @@ with (scope()) {
   window.onload = function() {
     for (var i=0; i < scope.__initializers.length; i++) scope.__initializers[i]();
     delete scope.__initializers;
-  }
+  };
 }

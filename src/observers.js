@@ -1,3 +1,5 @@
+/* jshint -W085 */
+
 with (scope()) {
 
   define('observe', function(method, callback, old_retval) {
@@ -46,7 +48,7 @@ with (scope()) {
     // put back the ones we're not gonna use
     scope.data_observers = observers_skipped;
 
-    for (var i=0; i < observers_to_run.length; i++) observe(observers_to_run[i].method, observers_to_run[i].callback, observers_to_run[i].retval);
+    for (var j=0; j < observers_to_run.length; j++) observe(observers_to_run[j].method, observers_to_run[j].callback, observers_to_run[j].retval);
 
     // explicit for now
     return null;

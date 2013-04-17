@@ -1,3 +1,5 @@
+/* jshint -W085 */
+
 with (scope('StorageBase')) {
   define('namespaced', function(name) {
     return Storage.namespace ? Storage.namespace + '_' + name : name;
@@ -42,7 +44,7 @@ with (scope('Cookies', 'StorageBase')) {
     var ca = document.cookie.split(';');
     for(var i=0; i<ca.length; i++) {
       var name = ca[i].split('=')[0].replace(/\s+/,'');
-      if (!((options.except||[]).map(namespaced).indexOf(name) >= 0)) remove(strip_namespace(name));
+      if ((options.except||[]).map(namespaced).indexOf(name) == -1) remove(strip_namespace(name));
     }
   });
 }
@@ -67,7 +69,7 @@ with (scope('Local', 'StorageBase')) {
   define('clear', function(options) {
     options = options || {};
     for (var attr in window.localStorage) {
-      if (!((options.except||[]).map(namespaced).indexOf(attr) >= 0)) remove(strip_namespace(attr));
+      if ((options.except||[]).map(namespaced).indexOf(attr) == -1) remove(strip_namespace(attr));
     }
   });
 }

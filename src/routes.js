@@ -1,3 +1,5 @@
+/* jshint -W085 */
+
 scope.routes = [];
 
 with (scope()) {
@@ -7,10 +9,10 @@ with (scope()) {
       setTimeout(callback, 100);
       var hash = get_route();
       if (hash != scope.current_route) set_route(hash, { skip_updating_browser_bar: true });
-    }
+    };
     
     // run once all other initializers finish
-    setTimeout(callback, 0);
+    if (scope.routes.length > 0) setTimeout(callback, 0);
   });
  
   // define a route
@@ -56,11 +58,11 @@ with (scope()) {
         var next_key = (key_parts.length > j+1) ? key_parts[j+1].replace(/\]$/,'') : null;
         
         // if there's not a next_key set the value... otherwise go a level deeper inception-style
-        if (next_key == null) {
-          if (this_key == '') target.push(this_value);
+        if (next_key === null) {
+          if (this_key === '') target.push(this_value);
           else target[this_key] = this_value;
         } else {
-          if (!target[this_key]) target[this_key] = (next_key == '' ? [] : {});
+          if (!target[this_key]) target[this_key] = (next_key === '' ? [] : {});
           target = target[this_key];
         }
       }
@@ -70,7 +72,7 @@ with (scope()) {
 
   define('to_param', function(params) {
     var qs = "";
-    for (var k in params) qs += ((qs.length == 0 ? '?' : '&') + k + '=' + params[k]);
+    for (var k in params) qs += ((qs.length === 0 ? '?' : '&') + k + '=' + params[k]);
     return qs;
   });
 
@@ -120,6 +122,9 @@ with (scope()) {
     // replace path variable with get_route's logic to strip query params
     path = get_route();
 
+    // set root level params hash
+    scope.instance.params = get_params();
+
     for (var i=0; i < scope.routes.length; i++) {
       var route = scope.routes[i];
       var matches = path.match(route.regex);
@@ -134,17 +139,20 @@ with (scope()) {
       }
     }
 
+    // register a pageview with google analytics for not_found
+    if (typeof(_gaq) == 'object') _gaq.push(['_trackPageview', '#not_found?path=' + encodeURIComponent(path)]);
+
     // page not found
-    for (var i=0; i < scope.routes.length; i++) {
-      var route = scope.routes[i];
-      var matches = '#not_found'.match(route.regex);
-      if (matches) {
+    for (j=0; j < scope.routes.length; i++) {
+      var route2 = scope.routes[i];
+      var matches2 = '#not_found'.match(route2.regex);
+      if (matches2) {
         // scroll to the top of newly loaded page --- CAB
         window.scrollTo(0, 0);
         
-        if (!route.context.run_filters('before')) return;
-        route.callback.apply(null, matches.slice(1));
-        route.context.run_filters('after');
+        if (!route2.context.run_filters('before')) return;
+        route2.callback.apply(null, matches2.slice(1));
+        route2.context.run_filters('after');
         return;
       }
     }
