@@ -362,42 +362,7 @@ with (scope()) {
       var real_callback = options.action;
       options.onSubmit = function(e) {
         stop_event(e);
-
-        var serialized_form = {};
-        var elems = this.getElementsByTagName('*');
-        for (var i=0; i < elems.length; i++) {
-          if ((elems[i].tagName != 'FORM') && elems[i].name) {
-            var value = null;
-            if (elems[i].tagName == 'SELECT') {
-              // TODO: support multiple select
-              value = elems[i].options[elems[i].selectedIndex].value;
-            } else if ((['radio', 'checkbox'].indexOf(elems[i].getAttribute('type')) == -1) || elems[i].checked) {
-              value = elems[i].value;
-            }
-
-            var name = elems[i].name;
-            if (name && (value !== null)) {
-              // TODO: currently only supports foo[] and foo[bar]. make recursive so nested works.
-              if (name.substring(name.length - 2) == '[]') {
-                name = name.substring(0,name.length - 2);
-                if (!serialized_form[name]) serialized_form[name] = [];
-                serialized_form[name].push(value);
-              } else if (name.indexOf('[') >= 0) {
-                var parts = name.split(/[[\]]/);
-                if (!serialized_form[parts[0]]) serialized_form[parts[0]] = {};
-                serialized_form[parts[0]][parts[1]] = value;
-              } else {
-                if (elems[i].getAttribute('placeholder') && (value == elems[i].getAttribute('placeholder'))) {
-                  serialized_form[name] = '';
-                } else {
-                  serialized_form[name] = value;
-                }
-              }
-            }
-          }
-        }
-
-        real_callback(serialized_form);
+        real_callback(serialize_form(this));
       };
       options.action = '';
     }
@@ -426,6 +391,47 @@ with (scope()) {
       });
     }
   );
+
+
+  define('serialize_form', function(form) {
+    var serialized_form = {};
+
+    var elems = form.getElementsByTagName('*');
+    for (var i=0; i < elems.length; i++) {
+      if ((elems[i].tagName != 'FORM') && elems[i].name) {
+        var value = null;
+        if (elems[i].getAttribute('placeholder') && (value == elems[i].getAttribute('placeholder'))) {
+          value = '';
+        } else if (elems[i].tagName == 'SELECT') {
+          // TODO: support multiple select
+          value = elems[i].options[elems[i].selectedIndex].value;
+        } else if ((['radio', 'checkbox'].indexOf(elems[i].getAttribute('type')) == -1) || elems[i].checked) {
+          value = elems[i].value;
+        }
+
+        var target = serialized_form;
+        var name_stack = elems[i].name.split('[');
+        for (var j=0; j < name_stack.length; j++) {
+          var this_key = name_stack[j].replace(/\]$/,'');
+          var next_key = name_stack[j+1] && name_stack[j+1].replace(/\]$/,'');
+
+          if (next_key === undefined) {
+            target[this_key] = value;
+          } else if (next_key === '') {
+            if (!target[this_key]) target[this_key] = [];
+            target[this_key].push(value);
+            break;
+          } else {
+            if (!target[this_key]) target[this_key] = {};
+            target = target[this_key];
+          }
+        }
+      }
+    }
+
+    return serialized_form;
+  });
+
 
   // remove a DOM element
   define('remove_element', function(id) {
@@ -633,7 +639,7 @@ with (scope()) {
 
   
   define('set', function(key, value) {
-    //console.log("SETTING ", key, value);
+    console.log("SETTING ", key, value);
     scope.data_hash[key] = value;
 
     // ghetto but works
@@ -642,13 +648,16 @@ with (scope()) {
 
     for (var i=0; i < scope.data_observers.length; i++) {
       var observer = scope.data_observers[i];
+      console.log(observer, key, observer.keys.indexOf(key));
       if (observer.keys.indexOf(key) != -1) {
+        console.log('running');
         observers_to_run.push(scope.data_observers[i]);
       } else {
+        console.log('skipping');
         observers_skipped.push(scope.data_observers[i]);
       }
     }
-
+    console.log(observers_to_run, observers_skipped);
     // put back the ones we're not gonna use
     scope.data_observers = observers_skipped;
 
@@ -661,6 +670,7 @@ with (scope()) {
   // returns the key from data_hash.  if there's currently a scope.data_logs, it appends the key that was used.
   define('get', function(key) {
     var data_log = scope.data_logs[scope.data_logs.length-1];
+    console.log('logging get', key);
     if (data_log && data_log.indexOf(key) == -1) data_log.push(key);
     return scope.data_hash[key];
   });

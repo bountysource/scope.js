@@ -212,42 +212,7 @@ with (scope()) {
       var real_callback = options.action;
       options.onSubmit = function(e) {
         stop_event(e);
-
-        var serialized_form = {};
-        var elems = this.getElementsByTagName('*');
-        for (var i=0; i < elems.length; i++) {
-          if ((elems[i].tagName != 'FORM') && elems[i].name) {
-            var value = null;
-            if (elems[i].tagName == 'SELECT') {
-              // TODO: support multiple select
-              value = elems[i].options[elems[i].selectedIndex].value;
-            } else if ((['radio', 'checkbox'].indexOf(elems[i].getAttribute('type')) == -1) || elems[i].checked) {
-              value = elems[i].value;
-            }
-
-            var name = elems[i].name;
-            if (name && (value !== null)) {
-              // TODO: currently only supports foo[] and foo[bar]. make recursive so nested works.
-              if (name.substring(name.length - 2) == '[]') {
-                name = name.substring(0,name.length - 2);
-                if (!serialized_form[name]) serialized_form[name] = [];
-                serialized_form[name].push(value);
-              } else if (name.indexOf('[') >= 0) {
-                var parts = name.split(/[[\]]/);
-                if (!serialized_form[parts[0]]) serialized_form[parts[0]] = {};
-                serialized_form[parts[0]][parts[1]] = value;
-              } else {
-                if (elems[i].getAttribute('placeholder') && (value == elems[i].getAttribute('placeholder'))) {
-                  serialized_form[name] = '';
-                } else {
-                  serialized_form[name] = value;
-                }
-              }
-            }
-          }
-        }
-
-        real_callback(serialized_form);
+        real_callback(serialize_form(this));
       };
       options.action = '';
     }
@@ -276,6 +241,47 @@ with (scope()) {
       });
     }
   );
+
+
+  define('serialize_form', function(form) {
+    var serialized_form = {};
+
+    var elems = form.getElementsByTagName('*');
+    for (var i=0; i < elems.length; i++) {
+      if ((elems[i].tagName != 'FORM') && elems[i].name) {
+        var value = null;
+        if (elems[i].getAttribute('placeholder') && (value == elems[i].getAttribute('placeholder'))) {
+          value = '';
+        } else if (elems[i].tagName == 'SELECT') {
+          // TODO: support multiple select
+          value = elems[i].options[elems[i].selectedIndex].value;
+        } else if ((['radio', 'checkbox'].indexOf(elems[i].getAttribute('type')) == -1) || elems[i].checked) {
+          value = elems[i].value;
+        }
+
+        var target = serialized_form;
+        var name_stack = elems[i].name.split('[');
+        for (var j=0; j < name_stack.length; j++) {
+          var this_key = name_stack[j].replace(/\]$/,'');
+          var next_key = name_stack[j+1] && name_stack[j+1].replace(/\]$/,'');
+
+          if (next_key === undefined) {
+            target[this_key] = value;
+          } else if (next_key === '') {
+            if (!target[this_key]) target[this_key] = [];
+            target[this_key].push(value);
+            break;
+          } else {
+            if (!target[this_key]) target[this_key] = {};
+            target = target[this_key];
+          }
+        }
+      }
+    }
+
+    return serialized_form;
+  });
+
 
   // remove a DOM element
   define('remove_element', function(id) {

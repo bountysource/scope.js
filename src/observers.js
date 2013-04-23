@@ -29,7 +29,7 @@ with (scope()) {
 
   
   define('set', function(key, value) {
-    //console.log("SETTING ", key, value);
+    console.log("SETTING ", key, value);
     scope.data_hash[key] = value;
 
     // ghetto but works
@@ -38,13 +38,16 @@ with (scope()) {
 
     for (var i=0; i < scope.data_observers.length; i++) {
       var observer = scope.data_observers[i];
+      console.log(observer, key, observer.keys.indexOf(key));
       if (observer.keys.indexOf(key) != -1) {
+        console.log('running');
         observers_to_run.push(scope.data_observers[i]);
       } else {
+        console.log('skipping');
         observers_skipped.push(scope.data_observers[i]);
       }
     }
-
+    console.log(observers_to_run, observers_skipped);
     // put back the ones we're not gonna use
     scope.data_observers = observers_skipped;
 
@@ -57,6 +60,7 @@ with (scope()) {
   // returns the key from data_hash.  if there's currently a scope.data_logs, it appends the key that was used.
   define('get', function(key) {
     var data_log = scope.data_logs[scope.data_logs.length-1];
+    console.log('logging get', key);
     if (data_log && data_log.indexOf(key) == -1) data_log.push(key);
     return scope.data_hash[key];
   });
