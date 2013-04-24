@@ -298,7 +298,11 @@ with (scope()) {
       //console.log("SETTING CHECKED", value, value ? 'checked' : null)
       //element.setAttribute(key, value ? 'checked' : null); 
       element.checked = !!value;
-    } else if (value !== undefined) {
+    } else if ((value === undefined) || (value === null)) {
+      // skipping null/undefined
+    } else if (typeof(value) == 'object') {
+      throw new Error("Not expecting object attribute: " + key);
+    } else {
       element.setAttribute(key, value);
     }
   });
@@ -362,7 +366,7 @@ with (scope()) {
       var real_callback = options.action;
       options.onSubmit = function(e) {
         stop_event(e);
-        real_callback(serialize_form(this));
+        real_callback(form_to_json(this));
       };
       options.action = '';
     }
@@ -393,7 +397,7 @@ with (scope()) {
   );
 
 
-  define('serialize_form', function(form) {
+  define('form_to_json', function(form) {
     var serialized_form = {};
 
     var elems = form.getElementsByTagName('*');
@@ -432,6 +436,28 @@ with (scope()) {
     return serialized_form;
   });
 
+
+  define('hash_to_query_string', function(hash, prefix) {
+    var parts = '';
+
+    // params to url string
+    for (var key in hash) {
+      var prefixed_key = prefix ? prefix + '['+key+']' : key;
+      if ((hash[key] === undefined) || (hash[key] === null) || (hash[key] === false)) {
+        parts += '&'+prefixed_key+'=';
+      } else if ((typeof(hash[key]) == 'object') && hash[key].pop) {
+        // array
+        for (var i=0; i < hash[key].length; i++) parts += '&'+prefixed_key+'[]=' + encode_html(hash[key][i]);
+      } else if (typeof(hash[key]) == 'object') {
+        // hash
+        parts += '&' + hash_to_query_string(hash[key], prefixed_key);
+      } else {
+        parts += '&'+prefixed_key+'=' + encode_html(hash[key]);
+      }
+    }
+
+    return parts.replace(/^&/,'');
+  });
 
   // remove a DOM element
   define('remove_element', function(id) {
@@ -584,11 +610,7 @@ with (scope('JSONP')) {
     options.params.callback = 'scope.jsonp_callbacks.' + callback_name;
     if (options.method != 'GET') options.params._method = options.method;
 
-    // params to url string
-    for (var key in options.params) {
-      url += (url.indexOf('?') == -1 ? '?' : '&');
-      url += key + '=' + encode_html(options.params[key]||'');
-    }
+    url += (url.indexOf('?') == -1 ? '?' : '&') + hash_to_query_string(options.params);
 
     // TODO: alert if url is too long
     var script = document.createElement("script");        
@@ -606,7 +628,7 @@ with (scope('JSONP')) {
     var head = document.getElementsByTagName('head')[0];
     head.appendChild(script);
   });
-  
+
 }
 ;/* jshint -W085 */
 

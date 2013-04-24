@@ -19,11 +19,7 @@ with (scope('JSONP')) {
     options.params.callback = 'scope.jsonp_callbacks.' + callback_name;
     if (options.method != 'GET') options.params._method = options.method;
 
-    // params to url string
-    for (var key in options.params) {
-      url += (url.indexOf('?') == -1 ? '?' : '&');
-      url += key + '=' + encode_html(options.params[key]||'');
-    }
+    url += (url.indexOf('?') == -1 ? '?' : '&') + hash_to_query_string(options.params);
 
     // TODO: alert if url is too long
     var script = document.createElement("script");        
@@ -41,5 +37,5 @@ with (scope('JSONP')) {
     var head = document.getElementsByTagName('head')[0];
     head.appendChild(script);
   });
-  
+
 }
