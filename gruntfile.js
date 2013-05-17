@@ -7,7 +7,7 @@ module.exports = function(grunt) {
         separator: ';'
       },
       dist: {
-        src: ['src/ec5-shim.min.js','src/init.js','src/util.js','src/initializers.js','src/elements.js','src/**/*.js'],
+        src: ['src/init.js','src/util.js','src/initializers.js','src/elements.js','src/**/*.js'],
         dest: 'dist/<%= pkg.name %>.js'
       }
     },
@@ -33,7 +33,8 @@ module.exports = function(grunt) {
           console: true,
           module: true,
           document: true
-        }
+        },
+        withstmt: true
       }
     },
     watch: {

@@ -1,4 +1,3 @@
-/* jshint -W085 */
 /* jshint -W103 */
 
 var scope = function(namespace, base) {
@@ -15,10 +14,21 @@ var scope = function(namespace, base) {
   }
 };
 
-// for live dom observers
-scope.data_logs = [];
-scope.data_observers = [];
-scope.data_hash = {};  
+// internal scope state stored here
+scope.initial_state = function() {
+  return {
+    // for live dom observers
+    data_logs: [],
+    data_observers: [],
+    data_hash: {},
+
+    // layouts and rendering
+    layouts: {},
+    routes: [],
+    refs: {}
+  };
+};
+scope.state = scope.initial_state();
 
 scope.create_context = function(proto) {
   function Scope() {}

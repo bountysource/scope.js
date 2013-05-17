@@ -1,4 +1,3 @@
-/* jshint -W085 */
 /* jshint -W103 */
 
 var scope = function(namespace, base) {
@@ -15,10 +14,21 @@ var scope = function(namespace, base) {
   }
 };
 
-// for live dom observers
-scope.data_logs = [];
-scope.data_observers = [];
-scope.data_hash = {};  
+// internal scope state stored here
+scope.initial_state = function() {
+  return {
+    // for live dom observers
+    data_logs: [],
+    data_observers: [],
+    data_hash: {},
+
+    // layouts and rendering
+    layouts: {},
+    routes: [],
+    refs: {}
+  };
+};
+scope.state = scope.initial_state();
 
 scope.create_context = function(proto) {
   function Scope() {}
@@ -36,9 +46,7 @@ scope.instance = scope.create_context({
 });
 
 // console.log for browsers lacking support
-if (!window.console) window.console = { log: function() {} };;/* jshint -W085 */
-
-with (scope()) {
+if (!window.console) window.console = { log: function() {} };;with (scope()) {
   define('redefine', function(name, callback) {
     var real_callback = this[name];
     define(name, function() {
@@ -134,9 +142,7 @@ with (scope()) {
     return new_hash;
   });
 }
-;/* jshint -W085 */
-
-with (scope()) {
+;with (scope()) {
   scope.__initializers = [];
 
   define('initializer', function(callback) {
@@ -148,8 +154,7 @@ with (scope()) {
     for (var i=0; i < scope.__initializers.length; i++) scope.__initializers[i]();
     delete scope.__initializers;
   };
-};/* jshint -W085 */
-/* jshint -W083 */
+};/* jshint -W083 */
 
 with (scope()) {
 
@@ -157,18 +162,43 @@ with (scope()) {
     var args = flatten_to_array(arguments);
     var options = shift_options_from_args(args);
 
-    options.layout = typeof(options.layout) == 'undefined' ? ((options.target||options.into) ? false : this.default_layout) : options.layout;
-    options.target =  options.target || options.into || document.body;
-    if (typeof(options.target) == 'string') options.target = document.getElementById(options.target);
+    // layout explicitly passed in but not found
+    if (options.layout && !scope.state.layouts[options.layout]) throw new Error("Layout not found: " + options.layout);
 
-    if (options.layout) {
-      args = options.layout(args);
-      if (!args.push) args = [args];
-      if (args[0].parentNode == options.target) return;
+    // default layout unless 'into" was passed in
+    if ((options.layout !== false) && !options.into && scope.state.layouts['default']) options.layout = 'default';
+
+    // allow { into: 'dom-id-name' }
+    if (!options.into) options.into = document.body;
+    if (typeof(options.into) == 'string') options.into = document.getElementById(options.into);
+
+    // if layout exists, use it
+    if (scope.state.layouts[options.layout]) {
+      if (!scope.state.layouts[options.layout].root_element) {
+        var outer_div = div();
+        var inner_div = div();
+        render({ into: outer_div }, curry(scope.state.layouts[options.layout].callback, inner_div));
+        if (outer_div.childNodes.length != 1) throw new Error("Expected a single element returned from layout: " + layout.name);
+        scope.state.layouts[options.layout].root_element = outer_div.firstChild;
+
+        if ((inner_div.parentNode.childNodes.length != 1) || inner_div.parentNode.childNodes[0] != inner_div) throw new Error("Expected layout to render arguments in an element with no siblings (i.e. div(arguments) ): " + layout.name);
+        scope.state.layouts[options.layout].target_element = inner_div.parentNode;
+      }
+
+      // render layout into DOM (or target)
+      if (scope.state.layouts[options.layout].root_element.parentNode != options.into) {
+        render({ into: options.into }, scope.state.layouts[options.layout].root_element);
+      }
+
+      // set new target to be inner element of layout
+      options.into = scope.state.layouts[options.layout].target_element;
     }
 
-    if (options.target.innerHTML) options.target.innerHTML = '';
-    //while (options.target.firstChild) options.target.removeChild(options.target.firstChild);
+
+    // delete all children of target (innerHTML seems to be fastest way)
+    if (options.into.innerHTML) options.into.innerHTML = '';
+    //while (options.into.firstChild) options.into.removeChild(options.into.firstChild);
+
     for (var i=0; i <= args.length; i++) {
       var dom_element = args[i];
 
@@ -176,7 +206,7 @@ with (scope()) {
       if (typeof(dom_element) == 'function') {
         // console.log("running function")
         dom_element = observe(dom_element, function(retval, old_retval) {
-          // console.log("INSIDE ELEMENT OBSERVER", retval, old_retval)
+          //console.log("INSIDE ELEMENT OBSERVER", retval, old_retval);
           
           // if the function returns nothing, use an empty string as a place holder
           if (typeof(retval) == 'undefined') retval = '';
@@ -199,24 +229,13 @@ with (scope()) {
       if (['string','boolean','number'].indexOf(typeof(dom_element)) >= 0) dom_element = document.createTextNode('' + dom_element);
       
       // insert it at the end
-      if (dom_element) options.target.appendChild(dom_element);
+      if (dom_element) options.into.appendChild(dom_element);
     }
   });
   
-  // define('layout', function(name, callback) {
-  //   var layout_elem, yield_parent;
-  //   define(name, function() {
-  //     if (!layout_elem) {
-  //       var tmp_div = div();
-  //       layout_elem = callback(tmp_div);
-  //       yield_parent = tmp_div.parentNode;
-  //     }
-  //     
-  //     render({ into: yield_parent, layout: false }, arguments);
-  //     return layout_elem;
-  //   });
-  // });
-
+  define('layout', function(name, callback) {
+    scope.state.layouts[name] = { name: name, callback: callback };
+  });
 
   // options processing order:
   //   type
@@ -262,11 +281,8 @@ with (scope()) {
     // run through rest of the attributes
     for (var n in options) {
       if (typeof(options[n]) == 'function') {
-        //console.log("LIVE OBSERVER")
-
         var key1 = n;
         observe(options[n], function(retval) {
-          //console.log("SETTING LIVE OBSERVER", retval, element, key1)
           set_attribute(element, key1, retval);
         });
       } else {
@@ -314,7 +330,7 @@ with (scope()) {
     'div', 'p', 'span', 'pre', 'img', 'br', 'hr', 'i', 'b', 'strong', 'u',
     'ul', 'ol', 'li', 'dl', 'dt', 'dd',
     'table', 'tr', 'td', 'th', 'thead', 'tbody', 'tfoot',
-    'select', 'option', 'optgroup', 'textarea', 'button', 'label', 'fieldset',
+    'option', 'optgroup', 'textarea', 'button', 'label', 'fieldset',
     'header', 'section', 'footer',
     function(tag) { 
       define(tag, function() { return element(tag, arguments); });
@@ -330,7 +346,7 @@ with (scope()) {
       options.href = '';
       options.onClick = function(e) {
         stop_event(e);
-        real_callback();
+        real_callback.call(e.target);
       };
     }
 //    else if (options.href && options.href.indexOf('#') == 0) {
@@ -487,6 +503,11 @@ with (scope()) {
     return class_names.indexOf(class_name) >= 0;
   });
 
+  define('toggle_class', function(e, class_name) {
+    if (has_class(e, class_name)) remove_class(e, class_name);
+    else add_class(e, class_name);
+  });
+
   define('hide', function(element) {
     if (typeof(element) == 'string') element = document.getElementById(element);
     if (element) element.style.display = 'none';
@@ -519,8 +540,7 @@ with (scope()) {
   });
 
 }
-;/* jshint -W085 */
-/* jshint -W103 */
+;/* jshint -W103 */
 
 with (scope()) {
 
@@ -589,9 +609,7 @@ with (scope()) {
   // 
   // capture_action_if_called_when_filtering('set_route');
   // capture_action_if_called_when_filtering('render');
-};/* jshint -W085 */
-
-with (scope('JSONP')) {
+};with (scope('JSONP')) {
 
   initializer(function() {
     scope.jsonp_callback_sequence = 0;
@@ -630,25 +648,21 @@ with (scope('JSONP')) {
   });
 
 }
-;/* jshint -W085 */
-
-with (scope()) {
+;with (scope()) {
 
   define('observe', function(method, callback, old_retval) {
     // add a new array to the stack to track gets
-    scope.data_logs.push([]);
+    scope.state.data_logs.push([]);
     
     // call method and track retval
     var retval = method();
 
-    var keys = scope.data_logs.pop();
+    // run actual callback with retval
+    callback(retval, old_retval);
+
+    var keys = scope.state.data_logs.pop();
     if (keys.length > 0) {
-      //console.log("WOAH MAMA WE NEED TO TRACK SOME KEYS", keys);
-
-      // pass retval through the callback and store it
-      retval = callback(retval, old_retval);
-
-      scope.data_observers.push({
+      scope.state.data_observers.push({
         keys: keys,          // ['key1', 'key2']
         retval: retval,
         method: method,
@@ -662,26 +676,26 @@ with (scope()) {
   
   define('set', function(key, value) {
     console.log("SETTING ", key, value);
-    scope.data_hash[key] = value;
+    scope.state.data_hash[key] = value;
 
     // ghetto but works
     var observers_to_run = [];
     var observers_skipped = [];
 
-    for (var i=0; i < scope.data_observers.length; i++) {
-      var observer = scope.data_observers[i];
+    for (var i=0; i < scope.state.data_observers.length; i++) {
+      var observer = scope.state.data_observers[i];
       console.log(observer, key, observer.keys.indexOf(key));
       if (observer.keys.indexOf(key) != -1) {
         console.log('running');
-        observers_to_run.push(scope.data_observers[i]);
+        observers_to_run.push(scope.state.data_observers[i]);
       } else {
         console.log('skipping');
-        observers_skipped.push(scope.data_observers[i]);
+        observers_skipped.push(scope.state.data_observers[i]);
       }
     }
     console.log(observers_to_run, observers_skipped);
     // put back the ones we're not gonna use
-    scope.data_observers = observers_skipped;
+    scope.state.data_observers = observers_skipped;
 
     for (var j=0; j < observers_to_run.length; j++) observe(observers_to_run[j].method, observers_to_run[j].callback, observers_to_run[j].retval);
 
@@ -689,21 +703,17 @@ with (scope()) {
     return null;
   });
 
-  // returns the key from data_hash.  if there's currently a scope.data_logs, it appends the key that was used.
+  // returns the key from data_hash.  if there's currently a scope.state.data_logs, it appends the key that was used.
   define('get', function(key) {
-    var data_log = scope.data_logs[scope.data_logs.length-1];
+    var data_log = scope.state.data_logs[scope.state.data_logs.length-1];
     console.log('logging get', key);
     if (data_log && data_log.indexOf(key) == -1) data_log.push(key);
-    return scope.data_hash[key];
+    return scope.state.data_hash[key];
   });
 }
 
 
-;/* jshint -W085 */
-
-scope.routes = [];
-
-with (scope()) {
+;with (scope()) {
   // check for new routes on the browser bar every 100ms
   initializer(function() {
     var callback = function() {
@@ -713,14 +723,14 @@ with (scope()) {
     };
     
     // run once all other initializers finish
-    if (scope.routes.length > 0) setTimeout(callback, 0);
+    if (scope.state.routes.length > 0) setTimeout(callback, 0);
   });
  
   // define a route
   //   route('#', function() {})  or  route({ '#': function(){}, '#a': function(){} })
   define('route', function(path, callback) {
     if (typeof(path) == 'string') {
-      scope.routes.push({
+      scope.state.routes.push({
         regex: (new RegExp("^" + path.replace(/^#\//,'#').replace(/:[a-z_]+/g, '([^/]*)') + '$')),
         callback: callback,
         context: this
@@ -791,11 +801,6 @@ with (scope()) {
     // strip leading slash (#/foo --> #foo) 
     path = path.replace(/^#\//,'#');
     
-    // super hax to fix layout bug
-    if (document.getElementById('_content')) {
-      document.getElementById('_content').setAttribute('id','content');
-    }
-    
     if (!options) options = {};
 
     if (options.params) {
@@ -826,44 +831,34 @@ with (scope()) {
     // set root level params hash
     scope.instance.params = get_params();
 
-    for (var i=0; i < scope.routes.length; i++) {
-      var route = scope.routes[i];
+    // try setting the actual route
+    if (run_route(path)) return;
+
+    // if that didn't work, register not_found with google analytics and move on to #not_found
+    if (typeof(_gaq) == 'object') _gaq.push(['_trackPageview', '#not_found?path=' + encodeURIComponent(path)]);
+    if (run_route('#not_found')) return;
+
+    // lastly, if that didn't work, show an alert
+    alert('Page not found: ' + path);
+  });
+
+  // scans routes for exact path match and runs before/after filters (no params processing)
+  define('run_route', function(path) {
+    for (var i=0; i < scope.state.routes.length; i++) {
+      var route = scope.state.routes[i];
       var matches = path.match(route.regex);
       if (matches) {
         // scroll to the top of newly loaded page --- CAB
         window.scrollTo(0, 0);
-        
+
         if (!route.context.run_filters('before')) return;
         route.callback.apply(null, matches.slice(1));
         route.context.run_filters('after');
-        return;
+        return true;
       }
     }
-
-    // register a pageview with google analytics for not_found
-    if (typeof(_gaq) == 'object') _gaq.push(['_trackPageview', '#not_found?path=' + encodeURIComponent(path)]);
-
-    // page not found
-    for (j=0; j < scope.routes.length; i++) {
-      var route2 = scope.routes[i];
-      var matches2 = '#not_found'.match(route2.regex);
-      if (matches2) {
-        // scroll to the top of newly loaded page --- CAB
-        window.scrollTo(0, 0);
-        
-        if (!route2.context.run_filters('before')) return;
-        route2.callback.apply(null, matches2.slice(1));
-        route2.context.run_filters('after');
-        return;
-      }
-    }
-
-    // not found and no #not_found route
-    alert('404 not found: ' + path);
   });
-};/* jshint -W085 */
-
-with (scope('StorageBase')) {
+};with (scope('StorageBase')) {
   define('namespaced', function(name) {
     return Storage.namespace ? Storage.namespace + '_' + name : name;
   });

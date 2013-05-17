@@ -1,6 +1,4 @@
-/* jshint -W085 */
-
-with (scope()) {
+with (scope('Test')) {
 
   test("element", function() {
     // can't assign an object to a value
@@ -85,5 +83,43 @@ with (scope()) {
     equal(hash_to_query_string({ key: { foo: { bar: [1,2,3] } } }), 'key[foo][bar][]=1&key[foo][bar][]=2&key[foo][bar][]=3');
   });
 
+
+  test("render", function() {
+    // strings
+    render("hello world");
+    equal(document.body.innerHTML, "hello world");
+
+    // arrays
+    render([["hello"], " ", [[[]]], ["world"]]);
+    equal(document.body.innerHTML, "hello world");
+
+    // basic elements
+    render(h1("hello"), p("world"));
+    equal(document.body.innerHTML, "<h1>hello</h1><p>world</p>");
+
+    // into elements
+    var target = div("text");
+    render(target);
+    equal(document.body.innerHTML, "<div>text</div>");
+    render({ into: target }, "replacement text");
+    equal(document.body.innerHTML, "<div>replacement text</div>");
+  });
+
+  test("layout", function() {
+    // no default layout
+    render("hello world");
+    equal(document.body.innerHTML, "hello world");
+
+    // layout not found before any layout() called
+    raises(function() {  render({ layout: 'doesnt_exist' }, "hello world");  }, /Layout not found/);
+
+    // define default
+    layout('default', function() {
+      return div({ id: 'layout' }, arguments);
+    });
+
+    render("hello world");
+    equal(document.body.innerHTML, '<div id="layout">hello world</div>');
+  });
 
 }

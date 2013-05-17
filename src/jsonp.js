@@ -1,5 +1,3 @@
-/* jshint -W085 */
-
 with (scope('JSONP')) {
 
   initializer(function() {

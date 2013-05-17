@@ -1,4 +1,3 @@
-/* jshint -W085 */
 /* jshint -W083 */
 
 with (scope()) {
@@ -7,18 +6,43 @@ with (scope()) {
     var args = flatten_to_array(arguments);
     var options = shift_options_from_args(args);
 
-    options.layout = typeof(options.layout) == 'undefined' ? ((options.target||options.into) ? false : this.default_layout) : options.layout;
-    options.target =  options.target || options.into || document.body;
-    if (typeof(options.target) == 'string') options.target = document.getElementById(options.target);
+    // layout explicitly passed in but not found
+    if (options.layout && !scope.state.layouts[options.layout]) throw new Error("Layout not found: " + options.layout);
 
-    if (options.layout) {
-      args = options.layout(args);
-      if (!args.push) args = [args];
-      if (args[0].parentNode == options.target) return;
+    // default layout unless 'into" was passed in
+    if ((options.layout !== false) && !options.into && scope.state.layouts['default']) options.layout = 'default';
+
+    // allow { into: 'dom-id-name' }
+    if (!options.into) options.into = document.body;
+    if (typeof(options.into) == 'string') options.into = document.getElementById(options.into);
+
+    // if layout exists, use it
+    if (scope.state.layouts[options.layout]) {
+      if (!scope.state.layouts[options.layout].root_element) {
+        var outer_div = div();
+        var inner_div = div();
+        render({ into: outer_div }, curry(scope.state.layouts[options.layout].callback, inner_div));
+        if (outer_div.childNodes.length != 1) throw new Error("Expected a single element returned from layout: " + layout.name);
+        scope.state.layouts[options.layout].root_element = outer_div.firstChild;
+
+        if ((inner_div.parentNode.childNodes.length != 1) || inner_div.parentNode.childNodes[0] != inner_div) throw new Error("Expected layout to render arguments in an element with no siblings (i.e. div(arguments) ): " + layout.name);
+        scope.state.layouts[options.layout].target_element = inner_div.parentNode;
+      }
+
+      // render layout into DOM (or target)
+      if (scope.state.layouts[options.layout].root_element.parentNode != options.into) {
+        render({ into: options.into }, scope.state.layouts[options.layout].root_element);
+      }
+
+      // set new target to be inner element of layout
+      options.into = scope.state.layouts[options.layout].target_element;
     }
 
-    if (options.target.innerHTML) options.target.innerHTML = '';
-    //while (options.target.firstChild) options.target.removeChild(options.target.firstChild);
+
+    // delete all children of target (innerHTML seems to be fastest way)
+    if (options.into.innerHTML) options.into.innerHTML = '';
+    //while (options.into.firstChild) options.into.removeChild(options.into.firstChild);
+
     for (var i=0; i <= args.length; i++) {
       var dom_element = args[i];
 
@@ -26,7 +50,7 @@ with (scope()) {
       if (typeof(dom_element) == 'function') {
         // console.log("running function")
         dom_element = observe(dom_element, function(retval, old_retval) {
-          // console.log("INSIDE ELEMENT OBSERVER", retval, old_retval)
+          //console.log("INSIDE ELEMENT OBSERVER", retval, old_retval);
           
           // if the function returns nothing, use an empty string as a place holder
           if (typeof(retval) == 'undefined') retval = '';
@@ -49,24 +73,13 @@ with (scope()) {
       if (['string','boolean','number'].indexOf(typeof(dom_element)) >= 0) dom_element = document.createTextNode('' + dom_element);
       
       // insert it at the end
-      if (dom_element) options.target.appendChild(dom_element);
+      if (dom_element) options.into.appendChild(dom_element);
     }
   });
   
-  // define('layout', function(name, callback) {
-  //   var layout_elem, yield_parent;
-  //   define(name, function() {
-  //     if (!layout_elem) {
-  //       var tmp_div = div();
-  //       layout_elem = callback(tmp_div);
-  //       yield_parent = tmp_div.parentNode;
-  //     }
-  //     
-  //     render({ into: yield_parent, layout: false }, arguments);
-  //     return layout_elem;
-  //   });
-  // });
-
+  define('layout', function(name, callback) {
+    scope.state.layouts[name] = { name: name, callback: callback };
+  });
 
   // options processing order:
   //   type
@@ -112,11 +125,8 @@ with (scope()) {
     // run through rest of the attributes
     for (var n in options) {
       if (typeof(options[n]) == 'function') {
-        //console.log("LIVE OBSERVER")
-
         var key1 = n;
         observe(options[n], function(retval) {
-          //console.log("SETTING LIVE OBSERVER", retval, element, key1)
           set_attribute(element, key1, retval);
         });
       } else {
@@ -164,7 +174,7 @@ with (scope()) {
     'div', 'p', 'span', 'pre', 'img', 'br', 'hr', 'i', 'b', 'strong', 'u',
     'ul', 'ol', 'li', 'dl', 'dt', 'dd',
     'table', 'tr', 'td', 'th', 'thead', 'tbody', 'tfoot',
-    'select', 'option', 'optgroup', 'textarea', 'button', 'label', 'fieldset',
+    'option', 'optgroup', 'textarea', 'button', 'label', 'fieldset',
     'header', 'section', 'footer',
     function(tag) { 
       define(tag, function() { return element(tag, arguments); });
@@ -180,7 +190,7 @@ with (scope()) {
       options.href = '';
       options.onClick = function(e) {
         stop_event(e);
-        real_callback();
+        real_callback.call(e.target);
       };
     }
 //    else if (options.href && options.href.indexOf('#') == 0) {
@@ -335,6 +345,11 @@ with (scope()) {
   define('has_class', function(e, class_name) {
     var class_names = e.className.split(/\s+/);
     return class_names.indexOf(class_name) >= 0;
+  });
+
+  define('toggle_class', function(e, class_name) {
+    if (has_class(e, class_name)) remove_class(e, class_name);
+    else add_class(e, class_name);
   });
 
   define('hide', function(element) {

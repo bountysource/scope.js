@@ -1,5 +1,3 @@
-/* jshint -W085 */
-
 with (scope()) {
   define('redefine', function(name, callback) {
     var real_callback = this[name];

@@ -1,5 +1,3 @@
-/* jshint -W085 */
-
 with (scope('StorageBase')) {
   define('namespaced', function(name) {
     return Storage.namespace ? Storage.namespace + '_' + name : name;

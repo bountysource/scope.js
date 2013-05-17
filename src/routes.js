@@ -1,7 +1,3 @@
-/* jshint -W085 */
-
-scope.routes = [];
-
 with (scope()) {
   // check for new routes on the browser bar every 100ms
   initializer(function() {
@@ -12,14 +8,14 @@ with (scope()) {
     };
     
     // run once all other initializers finish
-    if (scope.routes.length > 0) setTimeout(callback, 0);
+    if (scope.state.routes.length > 0) setTimeout(callback, 0);
   });
  
   // define a route
   //   route('#', function() {})  or  route({ '#': function(){}, '#a': function(){} })
   define('route', function(path, callback) {
     if (typeof(path) == 'string') {
-      scope.routes.push({
+      scope.state.routes.push({
         regex: (new RegExp("^" + path.replace(/^#\//,'#').replace(/:[a-z_]+/g, '([^/]*)') + '$')),
         callback: callback,
         context: this
@@ -90,11 +86,6 @@ with (scope()) {
     // strip leading slash (#/foo --> #foo) 
     path = path.replace(/^#\//,'#');
     
-    // super hax to fix layout bug
-    if (document.getElementById('_content')) {
-      document.getElementById('_content').setAttribute('id','content');
-    }
-    
     if (!options) options = {};
 
     if (options.params) {
@@ -125,39 +116,31 @@ with (scope()) {
     // set root level params hash
     scope.instance.params = get_params();
 
-    for (var i=0; i < scope.routes.length; i++) {
-      var route = scope.routes[i];
+    // try setting the actual route
+    if (run_route(path)) return;
+
+    // if that didn't work, register not_found with google analytics and move on to #not_found
+    if (typeof(_gaq) == 'object') _gaq.push(['_trackPageview', '#not_found?path=' + encodeURIComponent(path)]);
+    if (run_route('#not_found')) return;
+
+    // lastly, if that didn't work, show an alert
+    alert('Page not found: ' + path);
+  });
+
+  // scans routes for exact path match and runs before/after filters (no params processing)
+  define('run_route', function(path) {
+    for (var i=0; i < scope.state.routes.length; i++) {
+      var route = scope.state.routes[i];
       var matches = path.match(route.regex);
       if (matches) {
         // scroll to the top of newly loaded page --- CAB
         window.scrollTo(0, 0);
-        
+
         if (!route.context.run_filters('before')) return;
         route.callback.apply(null, matches.slice(1));
         route.context.run_filters('after');
-        return;
+        return true;
       }
     }
-
-    // register a pageview with google analytics for not_found
-    if (typeof(_gaq) == 'object') _gaq.push(['_trackPageview', '#not_found?path=' + encodeURIComponent(path)]);
-
-    // page not found
-    for (j=0; j < scope.routes.length; i++) {
-      var route2 = scope.routes[i];
-      var matches2 = '#not_found'.match(route2.regex);
-      if (matches2) {
-        // scroll to the top of newly loaded page --- CAB
-        window.scrollTo(0, 0);
-        
-        if (!route2.context.run_filters('before')) return;
-        route2.callback.apply(null, matches2.slice(1));
-        route2.context.run_filters('after');
-        return;
-      }
-    }
-
-    // not found and no #not_found route
-    alert('404 not found: ' + path);
   });
 }
