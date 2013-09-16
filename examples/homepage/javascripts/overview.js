@@ -70,7 +70,7 @@ with (scope('Overview', 'App')) {
       ),
 
       h2('DOM elements are easy to create.'),
-      p("There are a handful of helpers that creating DOM elements easy.  You can nest elements and pass any number of arguments.  You can optionally pass a hash containing key/values for attributes."),
+      p("There are a handful of helpers that make creating DOM elements easy.  You can nest elements and pass any number of arguments.  You can optionally pass a hash containing key/values for attributes."),
       code_block(
         "with (scope()) {",
         "  route('#', function() {",
