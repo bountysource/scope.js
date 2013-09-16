@@ -4,7 +4,7 @@ with (scope('Overview', 'App')) {
     render(
       h2('The "with" statement is not always dangerous.'),
       p("Before jumping into scope.js, it's important to understand how it works and why it's different.  At its core, " +
-        "Scope.js relies on the \"with\" statement.  Best-practices currently advises against using \"with\" as " +
+        "Scope.js relies on the \"with\" statement.  Best practices currently advises against using \"with\" as " +
         "it can lead to unexpected behavior.  However, if you use \"with\" for referencing rather than assigning, it " +
         "becomes a much safer construct."),
 
