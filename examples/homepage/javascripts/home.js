@@ -30,7 +30,7 @@ with (scope('Home', 'App')) {
           h4('Who uses it?'),
           p(
             div({ style: 'margin-bottom: 10px' }, a({ href: 'https://github.com/bountysource/frontend' }, 'Bountysource'), ': The funding platform for open-source software.'),
-            div(a({ href: 'https://github.com/bountysource/frontend' }, 'Badger'), ': A better registrar with domains for $10 a year.')
+            div(a({ href: 'https://badger.com' }, 'Badger'), ': A better registrar with domains for $10 a year.')
           ),
 
           h4("TodoMVC?"),
